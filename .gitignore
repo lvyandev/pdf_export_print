@@ -1,0 +1,179 @@
+# ============================================================================
+# Flutter 包发布专用忽略规则
+# ============================================================================
+
+# 示例项目的平台特定文件（不应发布到 pub.dev）
+example/android/
+example/ios/
+example/build/
+example/.flutter-plugins
+example/.flutter-plugins-dependencies
+
+# ============================================================================
+# Flutter/Dart 项目标准忽略规则
+# ============================================================================
+
+# Dart 编译产物
+*.dart_tool/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Flutter 构建产物
+**/build/
+
+# Web 构建产物
+**/web/packages/
+**/web/.packages
+
+# ============================================================================
+# IDE 配置文件忽略规则
+# ============================================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+.gradle/
+local.properties
+
+# Eclipse
+.metadata
+.recommenders/
+.project
+.classpath
+.settings/
+
+# ============================================================================
+# 操作系统临时文件
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+*.tmp
+*.temp
+*.swp
+*~
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ============================================================================
+# 开发工具和日志文件
+# ============================================================================
+
+# 日志文件
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 调试文件
+*.dSYM/
+
+# 覆盖率报告
+coverage/
+*.lcov
+
+# ============================================================================
+# PDF 导出打印项目特殊需求
+# ============================================================================
+
+# 临时生成的 PDF 文件（开发测试用）
+temp_pdf/
+output_pdf/
+generated_pdf/
+test_output/
+sample_output/
+
+# 字体缓存文件
+.font_cache/
+font_temp/
+
+# 打印预览临时文件
+print_preview/
+*.preview
+
+# ============================================================================
+# 依赖和缓存
+# ============================================================================
+
+# Node.js (如果使用了 Node.js 工具)
+node_modules/
+
+# Python (如果使用了 Python 脚本)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 其他缓存
+.cache/
+*.cache
+.tmp/
+tmp/
+
+# ============================================================================
+# 安全和敏感信息
+# ============================================================================
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# API 密钥和配置
+secrets/
+*.key
+*.pem
+*.p12
+*.keystore
+
+# ============================================================================
+# 版本控制和部署
+# ============================================================================
+
+# Git
+*.orig
+*.rej
+
+# 部署相关
+deploy/
+dist/
+release/
+
+# 备份文件
+*.bak
+*.backup
+*.old

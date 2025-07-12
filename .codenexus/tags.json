@@ -1,0 +1,72 @@
+{
+  "file_tags": {
+    "lib/src/config/adapter_config.dart": [
+      "status:new",
+      "type:config",
+      "category:adapter",
+      "feature:type-safety"
+    ],
+    "lib/src/core/data_adapter.dart": [
+      "improvement:remove-hardcode",
+      "status:cleaned"
+    ],
+    "example/lib/main.dart": [
+      "status:cleaned",
+      "improvement:remove-hardcode",
+      "note:backward-compatible"
+    ],
+    "lib/src/data/table_field.dart": [
+      "type:data-model",
+      "modified:sort-field",
+      "feature:field-sorting"
+    ],
+    "example/lib/type_safe_adapter_example.dart": [
+      "feature:type-safety",
+      "type:example",
+      "category:demo",
+      "status:new"
+    ],
+    "lib/src/constants/adapter_constants.dart": [
+      "feature:type-safety",
+      "status:new",
+      "category:adapter",
+      "type:constants"
+    ],
+    "lib/src/data/table_header.dart": [
+      "new:table-header",
+      "type:data-model",
+      "feature:header-sorting"
+    ],
+    "lib/src/modules/sub_table_module.dart": [
+      "type:module",
+      "feature:header-sorting",
+      "feature:unified-table",
+      "improvement:architecture-simplification",
+      "status:refactored",
+      "modified:sort-logic"
+    ],
+    "README.md": [
+      "feature:type-safety",
+      "status:updated",
+      "category:main-doc",
+      "type:documentation"
+    ],
+    "lib/src/components/custom_table_layout.dart": [
+      "feature:field-sorting",
+      "modified:sort-logic",
+      "type:component"
+    ],
+    "lib/src/models/main_table_data.dart": [
+      "modified:sort-support",
+      "feature:field-sorting",
+      "type:builder"
+    ],
+    "lib/src/adapters/type_safe_data_adapter.dart": [
+      "category:core",
+      "improvement:refactor",
+      "feature:type-safety",
+      "type:adapter",
+      "status:new"
+    ]
+  }
+}

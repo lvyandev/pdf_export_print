@@ -1,0 +1,12 @@
+{
+  "file_comments": {
+    "example/lib/main.dart": "已清理 _getDisplayLabel 方法中的硬编码中文标签映射，改为直接返回键名，保持向后兼容但不推荐使用",
+    "lib/src/components/common_table_widget.dart": "重构完成：移除了冗余的TableHeader类，统一使用TableField进行表头排序。TableField的value字段用作键名，label字段用作显示标签，sort字段用于排序权重。这简化了数据模型，消除了功能重复。",
+    "lib/src/config/adapter_config.dart": "简化的配置管理类，使用字符串键名进行字段标签映射，专注于模块级别的配置管理，避免硬编码具体业务字段",
+    "lib/src/constants/adapter_constants.dart": "简化的类型安全枚举常量，只定义模块级别的常量（DataKeys, ModuleTypes, ModuleDataKeys），避免过度具体化的字段枚举，让业务字段映射由适配器自行处理",
+    "lib/src/core/data_adapter.dart": "已清理硬编码的中文标题，改为使用英文键名作为默认值，保持库级别的通用性",
+    "lib/src/modules/sub_table_module.dart": "重构完成：统一的表格模块，通过moduleId参数和配置区分子表和审批记录，消除了ApprovalModule的重复代码，支持标题显示和自定义配置。现在使用TableField统一处理表头和数据，简化了数据模型。",
+    "lib/src/adapters/type_safe_data_adapter.dart": "重构后的类型安全适配器，使用模块级别的枚举常量，字段映射通过字符串键名处理，保持灵活性的同时提供类型安全的模块管理",
+    "README.md": "已更新为重点突出类型安全和配置驱动架构的主文档，包含快速开始、核心概念、使用指南、迁移指南和API参考"
+  }
+}
