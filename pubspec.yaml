@@ -1,9 +1,9 @@
 name: pdf_export_print
 description: A powerful and highly customizable Flutter PDF generation library with modular design.
-version: 1.0.0
-homepage: https://github.com/example/pdf_export_print
-repository: https://github.com/example/pdf_export_print
-issue_tracker: https://github.com/example/pdf_export_print/issues
+version: 0.0.1
+homepage: https://github.com/lvyandev/pdf_export_print
+repository: https://github.com/lvyandev/pdf_export_print
+issue_tracker: https://github.com/lvyandev/pdf_export_print/issues
 
 environment:
   sdk: ^3.8.1
