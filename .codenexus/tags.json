@@ -1,72 +1,99 @@
 {
   "file_tags": {
+    "lib/src/core/data_adapter.dart": [
+      "fix:废弃GenericDataAdapter",
+      "status:cleaned",
+      "status:refactored",
+      "improvement:结构优化",
+      "type:adapter",
+      "status:deprecated",
+      "issue:type-conversion",
+      "change:文件整合",
+      "improvement:remove-hardcode"
+    ],
+    "README.md": [
+      "status:updated",
+      "feature:type-safety",
+      "type:documentation",
+      "category:main-doc"
+    ],
     "lib/src/config/adapter_config.dart": [
       "status:new",
       "type:config",
       "category:adapter",
       "feature:type-safety"
     ],
-    "lib/src/core/data_adapter.dart": [
-      "improvement:remove-hardcode",
-      "status:cleaned"
+    "lib/src/modules/sub_table_module.dart": [
+      "improvement:architecture-simplification",
+      "type:module",
+      "modified:sort-logic",
+      "feature:unified-table",
+      "status:refactored",
+      "feature:header-sorting"
     ],
-    "example/lib/main.dart": [
-      "status:cleaned",
-      "improvement:remove-hardcode",
-      "note:backward-compatible"
-    ],
-    "lib/src/data/table_field.dart": [
-      "type:data-model",
-      "modified:sort-field",
-      "feature:field-sorting"
+    "lib/pdf_export_print.dart": [
+      "change:导出路径更新",
+      "type:main-export",
+      "status:updated",
+      "fix:更新文档示例"
     ],
     "example/lib/type_safe_adapter_example.dart": [
-      "feature:type-safety",
       "type:example",
+      "feature:type-safety",
       "category:demo",
       "status:new"
-    ],
-    "lib/src/constants/adapter_constants.dart": [
-      "feature:type-safety",
-      "status:new",
-      "category:adapter",
-      "type:constants"
     ],
     "lib/src/data/table_header.dart": [
       "new:table-header",
       "type:data-model",
       "feature:header-sorting"
     ],
-    "lib/src/modules/sub_table_module.dart": [
-      "type:module",
-      "feature:header-sorting",
-      "feature:unified-table",
-      "improvement:architecture-simplification",
+    "lib/src/adapters/type_safe_data_adapter.dart": [
+      "fix:类型声明一致性",
+      "type:adapter",
+      "category:core",
       "status:refactored",
-      "modified:sort-logic"
-    ],
-    "README.md": [
+      "enhancement:错误处理优化",
+      "improvement:refactor",
+      "status:documented",
       "feature:type-safety",
-      "status:updated",
-      "category:main-doc",
-      "type:documentation"
+      "improvement:代码简化",
+      "cleanup:删除冗余方法",
+      "enhancement:返回类型优化",
+      "status:new",
+      "quality:代码质量提升",
+      "improvement:文档完善",
+      "status:improved"
     ],
-    "lib/src/components/custom_table_layout.dart": [
-      "feature:field-sorting",
-      "modified:sort-logic",
-      "type:component"
+    "example/lib/main.dart": [
+      "issue:type-conversion",
+      "status:updated",
+      "type:example",
+      "improvement:remove-hardcode",
+      "note:backward-compatible",
+      "fix:使用TypeSafeDataAdapter",
+      "status:cleaned"
     ],
     "lib/src/models/main_table_data.dart": [
       "modified:sort-support",
-      "feature:field-sorting",
-      "type:builder"
+      "type:builder",
+      "feature:field-sorting"
     ],
-    "lib/src/adapters/type_safe_data_adapter.dart": [
-      "category:core",
-      "improvement:refactor",
+    "lib/src/constants/adapter_constants.dart": [
+      "type:constants",
+      "status:new",
       "feature:type-safety",
-      "type:adapter",
-      "status:new"
+      "category:adapter"
+    ],
+    "lib/src/data/table_field.dart": [
+      "feature:field-sorting",
+      "modified:sort-field",
+      "type:data-model"
+    ],
+    "lib/src/components/custom_table_layout.dart": [
+      "type:component",
+      "modified:sort-logic",
+      "feature:field-sorting"
     ]
   }
 }

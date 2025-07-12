@@ -325,6 +325,7 @@ class _TypeSafeAdapterExampleState extends State<TypeSafeAdapterExample> {
         );
       }
     } catch (e) {
+      print(e);
       if (mounted) {
         ScaffoldMessenger.of(
           context,

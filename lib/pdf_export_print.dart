@@ -20,7 +20,7 @@ library;
 /// // 创建PDF构建器
 /// final pdfBuilder = PDFPrintBuilder()
 ///   .withConfig(PDFConfig.defaultConfig())
-///   .withDataAdapter(GenericDataAdapter())
+///   .withDataAdapter(TypeSafeDataAdapter())
 ///   .addModule(LogoModule())
 ///   .addModule(TitleModule())
 ///   .addModule(MainTableModule())
@@ -75,8 +75,7 @@ export 'src/themes/themes.dart';
 export 'src/constants/adapter_constants.dart';
 export 'src/constants/module_constants.dart';
 
-// 类型安全适配器
-export 'src/adapters/type_safe_data_adapter.dart';
+// 类型安全适配器（已整合到 data_adapter.dart 中）
 
 // 导出pdf库，方便用户直接使用
 export 'package:pdf/pdf.dart';

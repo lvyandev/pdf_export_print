@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf_export_print/pdf_export_print.dart' as pw;
@@ -241,6 +243,7 @@ class _PDFExamplePageState extends State<PDFExamplePage> {
         );
       }
     } catch (e) {
+      print(e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('PDF生成失败: $e'), backgroundColor: Colors.red),
@@ -779,224 +782,72 @@ class _PDFExamplePageState extends State<PDFExamplePage> {
 }
 
 /// 简单的数据适配器实现
+///
+/// ⚠️ **已更新**: 现在基于 TypeSafeDataAdapter 实现，提供类型安全的数据适配。
+/// 这个实现主要用于向后兼容，新项目建议直接使用 TypeSafeDataAdapter。
 class SimpleDataAdapter extends pw.DataAdapter {
+  late final pw.TypeSafeDataAdapter _typeSafeAdapter;
+
+  SimpleDataAdapter() {
+    // 创建字段标签配置
+    final fieldLabels = pw.FieldLabelConfig.custom({
+      // 主表字段标签
+      'name': '姓名',
+      'position': '职位',
+      'department': '部门',
+      'salary': '薪资',
+      'email': '邮箱',
+      'phone': '电话',
+      'hireDate': '入职日期',
+      'status': '状态',
+
+      // 子表字段标签
+      'project': '项目',
+      'progress': '进度',
+      'responsible': '负责人',
+      'startDate': '开始时间',
+      'budget': '预算',
+
+      // 审批字段标签
+      'nodeName': '节点名称',
+      'approver': '审批人',
+      'signature': '签名',
+      'approveTime': '审批时间',
+      'opinion': '意见',
+
+      // 页脚字段标签
+      'creator': '制表人',
+      'createTime': '制表时间',
+      'reviewer': '审核人',
+      'reviewTime': '审核时间',
+    });
+
+    // 创建适配器配置
+    final config = pw.DataAdapterConfig(
+      fieldLabelConfig: fieldLabels,
+      moduleConfigs: pw.DataAdapterConfig.defaultConfig().moduleConfigs,
+      dataKeyMappings: pw.DataAdapterConfig.defaultConfig().dataKeyMappings,
+    );
+
+    // 初始化类型安全适配器
+    _typeSafeAdapter = pw.TypeSafeDataAdapter(config: config);
+  }
+
   @override
   Map<String, pw.ModuleData> adaptData(Map<String, dynamic> rawData) {
-    final Map<String, pw.ModuleData> adaptedData = {};
-
-    // 适配标题数据
-    if (rawData.containsKey('titles')) {
-      adaptedData['title'] = pw.ModuleData(
-        moduleType: 'title',
-        data: {'titles': rawData['titles']},
-      );
-    }
-
-    // 适配主表数据
-    if (rawData.containsKey('mainData')) {
-      final mainData = rawData['mainData'] as Map<String, dynamic>;
-      final fields = <pw.TableField>[];
-
-      mainData.forEach((key, value) {
-        // 根据字段设置排序权重（测试排序功能）
-        int sort = 0; // 默认排序值
-        if (key == 'name') {
-          sort = 3; // 姓名字段最高优先级
-        } else if (key == 'position') {
-          sort = 2; // 职位字段高优先级
-        } else if (key == 'department') {
-          sort = 1; // 部门字段中等优先级
-        }
-        // 其他字段保持默认 sort = 0
-
-        fields.add(
-          pw.TableField(
-            label: _getDisplayLabel(key),
-            value: value.toString(),
-            sort: sort,
-          ),
-        );
-      });
-
-      adaptedData['main_table'] = pw.ModuleData(
-        moduleType: 'main_table',
-        data: {'fields': fields},
-      );
-    }
-
-    // 适配子表数据
-    if (rawData.containsKey('details')) {
-      final details = rawData['details'] as List<dynamic>;
-      if (details.isNotEmpty) {
-        final firstRow = details.first as Map<String, dynamic>;
-        final dataHeaders = firstRow.keys.toList();
-
-        // 添加序号列到表头
-        final headers = ['序号', ...dataHeaders];
-
-        // 添加序号到数据行
-        final rows = details.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value as Map<String, dynamic>;
-          final dataRow = dataHeaders
-              .map((header) => item[header]?.toString() ?? '')
-              .toList();
-          return [(index + 1).toString(), ...dataRow];
-        }).toList();
-
-        // 设置表头排序权重（测试排序功能）
-        final headerSorts = <String, int>{
-          '项目': 3, // 最高优先级
-          '负责人': 2, // 高优先级
-          '状态': 1, // 中等优先级
-          // 其他列保持默认优先级 0
-        };
-
-        // 设置列宽比例（包含序号列）
-        final columnWidths = <double>[
-          0.08, // 序号 - 8%
-          0.23, // 项目 - 23%
-          0.14, // 状态 - 14%
-          0.09, // 进度 - 9%
-          0.14, // 负责人 - 14%
-          0.14, // 开始时间 - 14%
-          0.09, // 预算 - 9%
-          0.09, // 部门 - 9%
-        ]; // 总和：100%
-
-        adaptedData['sub_table'] = pw.ModuleData(
-          moduleType: 'sub_table',
-          data: {
-            'headers': headers,
-            'rows': rows,
-            'headerSorts': headerSorts,
-            'columnWidths': columnWidths,
-          },
-        );
-      }
-    }
-
-    // 适配Logo数据
-    if (rawData.containsKey('logoUrl')) {
-      adaptedData['logo'] = pw.ModuleData(
-        moduleType: 'logo',
-        data: {
-          'logoUrl': rawData['logoUrl'],
-          'width': pw.LogoConstants.defaultWidth,
-          'height': pw.LogoConstants.defaultHeight,
-        },
-      );
-    }
-
-    // 适配审批记录数据
-    if (rawData.containsKey('approvals')) {
-      final approvals = rawData['approvals'] as List<dynamic>;
-      if (approvals.isNotEmpty) {
-        // 从第一行数据推断表头
-        final firstApproval = approvals.first as Map<String, dynamic>;
-        final dataKeys = firstApproval.keys.toList();
-        final dataHeaders = dataKeys.map((key) {
-          // 简单的标签映射
-          switch (key) {
-            case 'nodeName':
-              return '节点名称';
-            case 'approver':
-              return '审批人';
-            case 'signature':
-              return '签名';
-            case 'approveTime':
-              return '审批时间';
-            case 'opinion':
-              return '意见';
-            default:
-              return key;
-          }
-        }).toList();
-
-        // 添加序号列到表头
-        final headers = ['序号', ...dataHeaders];
-
-        // 转换数据行，添加序号
-        final rows = approvals.asMap().entries.map((entry) {
-          final index = entry.key;
-          final approval = entry.value as Map<String, dynamic>;
-          final dataRow = dataKeys
-              .map((key) => approval[key]?.toString() ?? '')
-              .toList();
-          return [(index + 1).toString(), ...dataRow];
-        }).toList();
-
-        // 设置审批表头排序权重（测试排序功能）
-        final approvalHeaderSorts = <String, int>{
-          '审批人': 2, // 高优先级
-          '节点名称': 1, // 中等优先级
-          // 其他列保持默认优先级 0：排序、签名、审批时间、意见
-        };
-
-        // 设置审批表列宽比例（包含序号列）
-        final approvalColumnWidths = <double>[
-          0.08, // 序号 - 8%
-          0.18, // 节点名称 - 18%
-          0.18, // 审批人 - 18%
-          0.18, // 签名 - 18%
-          0.20, // 审批时间 - 20%
-          0.18, // 意见 - 18%
-        ]; // 总和：100%
-
-        adaptedData['approval'] = pw.ModuleData(
-          moduleType: 'approval',
-          data: {
-            'headers': headers,
-            'rows': rows,
-            'title': '审批记录',
-            'headerSorts': approvalHeaderSorts,
-            'columnWidths': approvalColumnWidths,
-          },
-        );
-      }
-    }
-
-    // 适配页脚数据
-    if (rawData.containsKey('footerData')) {
-      final footerData = rawData['footerData'] as Map<String, dynamic>;
-      final fields = <pw.TableField>[];
-
-      footerData.forEach((key, value) {
-        fields.add(
-          pw.TableField(
-            label: _getDisplayLabel(key),
-            value: value.toString(),
-            sort: 0, // 默认排序值
-          ),
-        );
-      });
-
-      adaptedData['footer'] = pw.ModuleData(
-        moduleType: 'footer',
-        data: {'fields': fields},
-      );
-    }
-
-    return adaptedData;
+    // 直接委托给类型安全适配器
+    return _typeSafeAdapter.adaptData(rawData);
   }
 
   @override
   bool validateData(Map<String, dynamic> rawData) {
-    return rawData.isNotEmpty;
+    // 委托给类型安全适配器
+    return _typeSafeAdapter.validateData(rawData);
   }
 
   @override
   List<String> getSupportedModules() {
-    return ['logo', 'title', 'main_table', 'sub_table', 'approval', 'footer'];
-  }
-
-  /// 获取显示标签
-  ///
-  /// 注意：这是旧的硬编码方式，不推荐使用
-  /// 建议使用 TypeSafeDataAdapter 配合 FieldLabelConfig
-  String _getDisplayLabel(String key) {
-    // 库级别不应该硬编码具体业务字段的标签
-    // 这里保留是为了向后兼容，但不推荐在新项目中使用
-    return key; // 直接返回键名，由业务层处理标签映射
+    // 委托给类型安全适配器
+    return _typeSafeAdapter.getSupportedModules();
   }
 }

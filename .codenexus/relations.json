@@ -1,25 +1,27 @@
 {
   "file_relations": {
+    "lib/src/core/data_adapter.dart": [
+      {
+        "target": "lib/src/adapters/type_safe_data_adapter.dart",
+        "description": "GenericDataAdapter 被废弃，推荐使用 TypeSafeDataAdapter 替代以解决类型转换异常问题"
+      }
+    ],
     "lib/src/config/adapter_config.dart": [
       {
         "target": "lib/src/adapters/type_safe_data_adapter.dart",
         "description": "配置类被类型安全适配器使用，提供字段标签映射和模块配置管理"
       }
     ],
-    "lib/src/modules/sub_table_module.dart": [
+    "lib/src/adapters/type_safe_data_adapter.dart": [
       {
-        "target": "lib/src/core/data_adapter.dart",
-        "description": "统一的表格模块处理子表和审批记录数据，通过配置区分不同类型"
-      },
-      {
-        "target": "lib/src/configs/sub_table_config.dart",
-        "description": "SubTableModule使用SubTableConfig进行配置，支持审批记录的列宽等特殊配置"
+        "target": "example/lib/type_safe_adapter_example.dart",
+        "description": "类型安全适配器的使用示例，展示如何配置和使用新的适配器替代硬编码方式"
       }
     ],
-    "lib/src/components/custom_table_layout.dart": [
+    "lib/src/models/main_table_data.dart": [
       {
         "target": "lib/src/data/table_field.dart",
-        "description": "CustomTableLayout 使用 TableField.sort 字段进行排序"
+        "description": "MainTableFieldBuilder 创建带有 sort 字段的 TableField 实例"
       }
     ],
     "docs/migration_guide.md": [
@@ -32,22 +34,40 @@
         "description": "迁移指南引用配置详解文档，帮助用户理解配置参数的具体作用"
       }
     ],
-    "lib/src/models/main_table_data.dart": [
-      {
-        "target": "lib/src/data/table_field.dart",
-        "description": "MainTableFieldBuilder 创建带有 sort 字段的 TableField 实例"
-      }
-    ],
     "example/lib/main.dart": [
       {
         "target": "example/lib/type_safe_adapter_example.dart",
         "description": "旧的SimpleDataAdapter示例与新的TypeSafeDataAdapter示例形成对比，展示迁移前后的差异"
+      },
+      {
+        "target": "lib/src/adapters/type_safe_data_adapter.dart",
+        "description": "SimpleDataAdapter 重构为基于 TypeSafeDataAdapter 的实现，解决类型转换异常"
       }
     ],
     "lib/src/constants/adapter_constants.dart": [
       {
         "target": "lib/src/config/adapter_config.dart",
         "description": "枚举常量被配置类使用，定义数据键、模块类型和字段键的类型安全常量"
+      }
+    ],
+    "lib/src/components/custom_table_layout.dart": [
+      {
+        "target": "lib/src/data/table_field.dart",
+        "description": "CustomTableLayout 使用 TableField.sort 字段进行排序"
+      }
+    ],
+    "README.md": [
+      {
+        "target": "docs/migration_guide.md",
+        "description": "README中引用迁移指南，为用户提供从旧版本升级的详细步骤"
+      },
+      {
+        "target": "docs/adapter_config_guide.md",
+        "description": "README中引用配置详解文档，帮助用户理解配置参数的具体作用"
+      },
+      {
+        "target": "example/lib/type_safe_adapter_example.dart",
+        "description": "README中推荐查看类型安全适配器示例，展示最佳实践"
       }
     ],
     "lib/pdf_export_print.dart": [
@@ -68,26 +88,6 @@
       {
         "target": "lib/src/data/table_header.dart",
         "description": "SubTableModule 使用 TableHeader 进行表头排序"
-      }
-    ],
-    "lib/src/adapters/type_safe_data_adapter.dart": [
-      {
-        "target": "example/lib/type_safe_adapter_example.dart",
-        "description": "类型安全适配器的使用示例，展示如何配置和使用新的适配器替代硬编码方式"
-      }
-    ],
-    "README.md": [
-      {
-        "target": "docs/migration_guide.md",
-        "description": "README中引用迁移指南，为用户提供从旧版本升级的详细步骤"
-      },
-      {
-        "target": "docs/adapter_config_guide.md",
-        "description": "README中引用配置详解文档，帮助用户理解配置参数的具体作用"
-      },
-      {
-        "target": "example/lib/type_safe_adapter_example.dart",
-        "description": "README中推荐查看类型安全适配器示例，展示最佳实践"
       }
     ]
   }
