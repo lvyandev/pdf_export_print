@@ -18,7 +18,7 @@
 
 ```yaml
 dependencies:
-  pdf_export_print: ^1.0.0
+  pdf_export_print: ^0.0.1
 ```
 
 然后运行：
