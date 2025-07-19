@@ -9,6 +9,14 @@ example/build/
 example/.flutter-plugins
 example/.flutter-plugins-dependencies
 
+# 顶级平台目录（不应发布到 pub.dev）
+android/
+ios/
+
+# 顶级平台目录（不应发布到 pub.dev）
+android/
+ios/
+
 # ============================================================================
 # Flutter/Dart 项目标准忽略规则
 # ============================================================================
