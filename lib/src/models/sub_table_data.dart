@@ -15,15 +15,6 @@ class SubTableData extends ModuleDescriptor {
   /// 表格列配置
   final Map<String, dynamic>? columnConfig;
 
-  /// 是否显示边框
-  final bool showBorder;
-
-  /// 是否显示内边框
-  final bool showInnerBorder;
-
-  /// 是否支持图片展示
-  final bool supportImages;
-
   /// 标题
   final String? title;
 
@@ -45,9 +36,6 @@ class SubTableData extends ModuleDescriptor {
     required this.tableRows,
     required this.headers,
     this.columnConfig,
-    this.showBorder = true,
-    this.showInnerBorder = true,
-    this.supportImages = false,
     this.title,
     String? moduleId,
     ModuleType moduleType = ModuleType.subTable,
@@ -59,9 +47,6 @@ class SubTableData extends ModuleDescriptor {
            'tableRows': tableRows,
            'headers': headers,
            if (columnConfig != null) 'columnConfig': columnConfig,
-           'showBorder': showBorder,
-           'showInnerBorder': showInnerBorder,
-           'supportImages': supportImages,
            if (title != null) 'title': title,
          },
        );
@@ -70,9 +55,6 @@ class SubTableData extends ModuleDescriptor {
   factory SubTableData._fromRawRows(
     List<Map<String, dynamic>> rawRows, {
     Map<String, dynamic>? columnConfig,
-    bool showBorder = true,
-    bool showInnerBorder = true,
-    bool supportImages = false,
     String? title,
     String? moduleId,
     ModuleType moduleType = ModuleType.subTable,
@@ -82,9 +64,6 @@ class SubTableData extends ModuleDescriptor {
         tableRows: [],
         headers: [],
         columnConfig: columnConfig,
-        showBorder: showBorder,
-        showInnerBorder: showInnerBorder,
-        supportImages: supportImages,
         title: title,
         moduleId: moduleId,
         moduleType: moduleType,
@@ -149,9 +128,6 @@ class SubTableData extends ModuleDescriptor {
       tableRows: tableRows,
       headers: headers,
       columnConfig: columnConfig,
-      showBorder: showBorder,
-      showInnerBorder: showInnerBorder,
-      supportImages: supportImages,
       title: title,
       moduleId: moduleId,
       moduleType: moduleType,
@@ -162,17 +138,11 @@ class SubTableData extends ModuleDescriptor {
   factory SubTableData.forSubTable({
     required List<Map<String, dynamic>> rows,
     Map<String, dynamic>? columnConfig,
-    bool showBorder = true,
-    bool showInnerBorder = true,
-    bool supportImages = false,
     String? moduleId,
   }) {
     return SubTableData._fromRawRows(
       rows,
       columnConfig: columnConfig,
-      showBorder: showBorder,
-      showInnerBorder: showInnerBorder,
-      supportImages: supportImages,
       moduleId: moduleId,
       moduleType: ModuleType.subTable,
     );
@@ -182,16 +152,11 @@ class SubTableData extends ModuleDescriptor {
   factory SubTableData.forApproval({
     required List<Map<String, dynamic>> rows,
     Map<String, dynamic>? columnConfig,
-    bool showBorder = true,
-    bool showInnerBorder = true,
     String? moduleId,
   }) {
     return SubTableData._fromRawRows(
       rows,
       columnConfig: columnConfig,
-      showBorder: showBorder,
-      showInnerBorder: showInnerBorder,
-      supportImages: false, // 审批流通常不需要图片
       moduleId: moduleId,
       moduleType: ModuleType.approval,
     );
@@ -202,12 +167,10 @@ class SubTableData extends ModuleDescriptor {
     List<dynamic> list, {
     String? moduleId,
     ModuleType moduleType = ModuleType.subTable,
-    bool supportImages = false,
   }) {
     final rows = list.whereType<Map<String, dynamic>>().toList();
     return SubTableData._fromRawRows(
       rows,
-      supportImages: supportImages,
       moduleId: moduleId,
       moduleType: moduleType,
     );
@@ -225,7 +188,6 @@ class SubTableData extends ModuleDescriptor {
         descriptor.data as List<dynamic>,
         moduleId: descriptor.moduleId,
         moduleType: descriptor.type,
-        supportImages: descriptor.type == ModuleType.subTable,
       );
     }
 
@@ -237,9 +199,6 @@ class SubTableData extends ModuleDescriptor {
       return SubTableData._fromRawRows(
         rows,
         columnConfig: map['columnConfig'] as Map<String, dynamic>?,
-        showBorder: map['showBorder'] as bool? ?? true,
-        showInnerBorder: map['showInnerBorder'] as bool? ?? true,
-        supportImages: map['supportImages'] as bool? ?? false,
         title: map['title'] as String?,
         moduleId: descriptor.moduleId,
         moduleType: descriptor.type,

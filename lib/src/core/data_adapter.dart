@@ -432,8 +432,6 @@ class TypeSafeDataAdapter extends DataAdapter {
     // 返回MainTableData用于主表
     return MainTableData.forMainTable(
       fields: fields,
-      showBorder: true,
-      showInnerBorder: true,
       moduleId: descriptor.moduleId,
     );
   }
@@ -535,6 +533,8 @@ class TypeSafeDataAdapter extends DataAdapter {
         headers: [],
         tableRows: [],
         title: config.fieldLabelConfig.getLabel(moduleId),
+        moduleType: moduleType,
+        moduleId: moduleId,
       );
     }
 
@@ -607,7 +607,8 @@ class TypeSafeDataAdapter extends DataAdapter {
       headers: headers,
       tableRows: rows,
       title: config.fieldLabelConfig.getLabel(moduleId),
-      showBorder: true,
+      moduleType: moduleType,
+      moduleId: moduleId,
     );
   }
 }

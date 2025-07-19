@@ -10,40 +10,26 @@ class MainTableData extends ModuleDescriptor {
   /// 表格字段列表
   final List<TableField> fields;
 
-  /// 是否显示边框
-  final bool showBorder;
-
-  /// 是否显示内边框
-  final bool showInnerBorder;
-
   /// 每行字段数（主要用于页脚）
   final int? fieldsPerRow;
 
   MainTableData({
     required this.fields,
-    this.showBorder = true,
-    this.showInnerBorder = false,
     this.fieldsPerRow,
     String? moduleId,
     ModuleType moduleType = ModuleType.mainTable,
   }) : super(moduleType, moduleId ?? moduleType.value, {
          'fields': fields,
-         'showBorder': showBorder,
-         'showInnerBorder': showInnerBorder,
          if (fieldsPerRow != null) 'fieldsPerRow': fieldsPerRow,
        });
 
   /// 创建主表数据
   factory MainTableData.forMainTable({
     required List<TableField> fields,
-    bool showBorder = true,
-    bool showInnerBorder = false,
     String? moduleId,
   }) {
     return MainTableData(
       fields: fields,
-      showBorder: showBorder,
-      showInnerBorder: showInnerBorder,
       moduleId: moduleId,
       moduleType: ModuleType.mainTable,
     );
@@ -52,15 +38,11 @@ class MainTableData extends ModuleDescriptor {
   /// 创建页脚数据
   factory MainTableData.forFooter({
     required List<TableField> fields,
-    bool showBorder = true,
-    bool showInnerBorder = false,
     int fieldsPerRow = 3,
     String? moduleId,
   }) {
     return MainTableData(
       fields: fields,
-      showBorder: showBorder,
-      showInnerBorder: showInnerBorder,
       fieldsPerRow: fieldsPerRow,
       moduleId: moduleId,
       moduleType: ModuleType.footer,
@@ -88,8 +70,6 @@ class MainTableData extends ModuleDescriptor {
 
     return MainTableData(
       fields: fields,
-      showBorder: map['showBorder'] as bool? ?? true,
-      showInnerBorder: map['showInnerBorder'] as bool? ?? false,
       fieldsPerRow: map['fieldsPerRow'] as int?,
       moduleId: moduleId,
       moduleType: moduleType,

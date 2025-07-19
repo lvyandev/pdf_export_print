@@ -450,7 +450,11 @@ class _PDFExamplePageState extends State<PDFExamplePage> {
       updatedModuleConfigs[pw.ModuleType.mainTable] = pw.AdapterModuleConfig(
         moduleType: mainTableConfig.moduleType,
         moduleConfig: (mainTableConfig.moduleConfig as pw.MainTableConfig)
-            .copyWith(enabled: _showMainTable),
+            .copyWith(
+              enabled: _showMainTable,
+              showBorder: _mainTableBorder,
+              showInnerBorder: _mainTableInnerBorder,
+            ),
         fieldConfigs: mainTableConfig.fieldConfigs,
       );
     }
@@ -460,7 +464,7 @@ class _PDFExamplePageState extends State<PDFExamplePage> {
       updatedModuleConfigs[pw.ModuleType.subTable] = pw.AdapterModuleConfig(
         moduleType: subTableConfig.moduleType,
         moduleConfig: (subTableConfig.moduleConfig as pw.SubTableConfig)
-            .copyWith(enabled: _showSubTable),
+            .copyWith(enabled: _showSubTable, showBorder: _subTableBorder),
         fieldConfigs: subTableConfig.fieldConfigs,
       );
     }
@@ -470,7 +474,7 @@ class _PDFExamplePageState extends State<PDFExamplePage> {
       updatedModuleConfigs[pw.ModuleType.approval] = pw.AdapterModuleConfig(
         moduleType: approvalConfig.moduleType,
         moduleConfig: (approvalConfig.moduleConfig as pw.SubTableConfig)
-            .copyWith(enabled: _showApproval),
+            .copyWith(enabled: _showApproval, showBorder: _approvalBorder),
         fieldConfigs: approvalConfig.fieldConfigs,
       );
     }
@@ -481,6 +485,7 @@ class _PDFExamplePageState extends State<PDFExamplePage> {
         moduleType: footerConfig.moduleType,
         moduleConfig: (footerConfig.moduleConfig as pw.FooterConfig).copyWith(
           enabled: _showFooter,
+          showBorder: _footerBorder,
         ),
         fieldConfigs: footerConfig.fieldConfigs,
       );
