@@ -2,7 +2,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf_export_print/src/components/components.dart';
 import 'package:pdf_export_print/src/configs/configs.dart';
 import 'package:pdf_export_print/src/core/core.dart';
-import 'package:pdf_export_print/src/data/data.dart';
+import 'package:pdf_export_print/src/data/table_field.dart';
 import 'package:pdf_export_print/src/models/models.dart';
 import 'package:pdf_export_print/src/themes/themes.dart';
 
@@ -11,12 +11,13 @@ import 'package:pdf_export_print/src/themes/themes.dart';
 /// 统一处理子表和审批记录，通过配置区分不同类型
 class SubTableModule extends PDFModule {
   final SubTableConfig _config;
-  final String? _customModuleId;
+  final ModuleDescriptor _descriptor;
   late final CommonTableWidget _tableWidget;
 
-  SubTableModule({SubTableConfig? config, String? moduleId})
-    : _config = config ?? SubTableConfig.defaultConfig(),
-      _customModuleId = moduleId {
+  SubTableModule({SubTableConfig? config, required ModuleDescriptor descriptor})
+    : this._internal(config ?? SubTableConfig.defaultConfig(), descriptor);
+
+  SubTableModule._internal(this._config, this._descriptor) : super(_config) {
     _tableWidget = CommonTableWidget(
       config: CommonTableConfig(
         showBorder: _config.showBorder,
@@ -33,23 +34,29 @@ class SubTableModule extends PDFModule {
         headerAlignment: _config.headerAlignment,
         dataAlignment: _config.dataAlignment,
         defaultColumnWidths: _config.defaultColumnWidths,
+        cellVerticalAlignment: _config.cellVerticalAlignment,
       ),
     );
   }
 
   @override
-  String get moduleId => _customModuleId ?? 'sub_table';
+  ModuleDescriptor get descriptor => _descriptor;
 
   @override
-  int get priority => 40; // 中等优先级
+  Future<List<pw.Widget>> render(
+    ModuleDescriptor descriptor,
+    PDFContext context,
+  ) async {
+    // 直接使用 ModuleDescriptor 中的数据，或者如果传入的就是 SubTableData 则直接使用
+    final SubTableData subTableData;
 
-  @override
-  ModuleConfig get config => _config.moduleConfig;
-
-  @override
-  Future<List<pw.Widget>> render(ModuleData data, PDFContext context) async {
-    // 直接使用SubTableData，适配器保证输入类型正确
-    final subTableData = data as SubTableData;
+    if (descriptor is SubTableData) {
+      // 如果传入的就是 SubTableData，直接使用
+      subTableData = descriptor;
+    } else {
+      // 从 ModuleDescriptor.data 创建 SubTableData
+      subTableData = SubTableData.fromDescriptor(descriptor);
+    }
 
     if (subTableData.isEmpty) {
       return [];
@@ -64,12 +71,12 @@ class SubTableModule extends PDFModule {
 
     // 添加标题（如果配置启用）
     if (_config.showTitle) {
-      final title = subTableData.title ?? moduleId;
+      final title = subTableData.title ?? descriptor.moduleId; // 使用模块ID作为标题
       widgets.add(_buildTitle(title, context));
     }
 
     // 构建表格
-    final table = _buildTableFromSubTableData(subTableData, context);
+    final table = await _buildTableFromSubTableData(subTableData, context);
     widgets.add(table);
 
     // 添加底部间距
@@ -81,10 +88,18 @@ class SubTableModule extends PDFModule {
   }
 
   @override
-  bool canRender(ModuleData data) {
-    // 直接使用SubTableData，适配器保证输入类型正确
-    final subTableData = data as SubTableData;
-    return !subTableData.isEmpty;
+  bool canRender(ModuleDescriptor descriptor) {
+    try {
+      final SubTableData subTableData;
+      if (descriptor is SubTableData) {
+        subTableData = descriptor;
+      } else {
+        subTableData = SubTableData.fromDescriptor(descriptor);
+      }
+      return !subTableData.isEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// 构建标题
@@ -106,62 +121,20 @@ class SubTableModule extends PDFModule {
   }
 
   /// 从SubTableData构建表格
-  pw.Widget _buildTableFromSubTableData(
+  Future<pw.Widget> _buildTableFromSubTableData(
     SubTableData subTableData,
     PDFContext context,
-  ) {
-    // 将SubTableData转换为CommonTableWidget需要的格式
+  ) async {
     final headers = subTableData.headers;
-    final rows = subTableData.rows.map((rowFields) {
-      return rowFields.map((field) => field.value).toList();
-    }).toList();
 
-    // 创建一个临时的ModuleData用于传递给CommonTableWidget
-    final tempData = ModuleData(
-      moduleType: subTableData.moduleType,
-      data: {
-        'headers': headers,
-        'rows': rows,
-        'title': subTableData.title,
-        'showBorder': subTableData.showBorder,
-        // 添加列宽信息
-        'columnWidths': _extractColumnWidths(subTableData),
-      },
+    // 直接使用已解析的 TableField 数据
+    final List<List<TableField>> tableFieldRows = subTableData.tableRows;
+
+    // 使用支持 TableField 的方法
+    return await _tableWidget.buildTableWithFields(
+      headers,
+      tableFieldRows,
+      context,
     );
-
-    return _tableWidget.buildTable(headers, rows, tempData, context);
-  }
-
-  /// 从SubTableData提取列宽信息
-  List<double> _extractColumnWidths(SubTableData subTableData) {
-    if (subTableData.rows.isEmpty) {
-      return List.filled(
-        subTableData.headers.length,
-        1.0 / subTableData.headers.length,
-      );
-    }
-
-    // 使用第一行的字段来确定列宽
-    final firstRow = subTableData.rows.first;
-    final columnWidths = <double>[];
-
-    for (int i = 0; i < subTableData.headers.length; i++) {
-      if (i < firstRow.length) {
-        columnWidths.add(firstRow[i].getEffectiveWidthPercent());
-      } else {
-        // 如果没有对应的字段，使用平均宽度
-        columnWidths.add(1.0 / subTableData.headers.length);
-      }
-    }
-
-    // 确保总宽度为1.0
-    final totalWidth = columnWidths.fold(0.0, (sum, width) => sum + width);
-    if (totalWidth > 0) {
-      for (int i = 0; i < columnWidths.length; i++) {
-        columnWidths[i] = columnWidths[i] / totalWidth;
-      }
-    }
-
-    return columnWidths;
   }
 }

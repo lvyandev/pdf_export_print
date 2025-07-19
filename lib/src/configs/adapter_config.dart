@@ -1,31 +1,111 @@
+import 'dart:developer';
+
+import 'package:pdf_export_print/src/configs/configs.dart';
 import 'package:pdf_export_print/src/constants/adapter_constants.dart';
+import 'package:pdf_export_print/src/core/core.dart';
 import 'package:pdf_export_print/src/data/data.dart';
 import 'package:pdf_export_print/src/data/table_field.dart';
 
 /// 字段标签配置类
 ///
-/// 管理字段键名到显示标签的映射关系
+/// 管理字段键名到显示标签的映射关系，支持全局映射和模块特定映射
 class FieldLabelConfig {
-  /// 字段标签映射
+  /// 全局字段标签映射
   final Map<String, String> _labelMappings;
 
+  /// 模块特定字段标签映射
+  final Map<String, Map<String, String>> _moduleMappings;
+
   /// 私有构造函数
-  const FieldLabelConfig._(this._labelMappings);
+  const FieldLabelConfig._(this._labelMappings, this._moduleMappings);
 
   /// 创建默认配置（空映射）
   ///
   /// 库级别不提供具体的字段映射，由业务项目自定义
   factory FieldLabelConfig.defaultConfig() {
-    return FieldLabelConfig._(const <String, String>{});
+    return FieldLabelConfig._(
+      const <String, String>{},
+      const <String, Map<String, String>>{},
+    );
   }
 
-  /// 创建自定义配置
+  /// 创建自定义配置（扁平化映射，向后兼容）
   factory FieldLabelConfig.custom(Map<String, String> customMappings) {
-    return FieldLabelConfig._(Map<String, String>.from(customMappings));
+    return FieldLabelConfig._(
+      Map<String, String>.from(customMappings),
+      const <String, Map<String, String>>{},
+    );
   }
 
-  /// 获取字段显示标签
+  /// 创建增强配置（支持嵌套Map结构）
+  ///
+  /// ### 参数
+  /// - [globalMappings] 全局字段映射，格式：`{'fieldKey': 'label'}`
+  /// - [moduleMappings] 模块特定映射，格式：`{'moduleId': {'fieldKey': 'label'}}`
+  ///
+  /// ### 示例
+  /// ```dart
+  /// final config = FieldLabelConfig.enhanced(
+  ///   globalMappings: {
+  ///     'name': '姓名',
+  ///     'age': '年龄',
+  ///   },
+  ///   moduleMappings: {
+  ///     'monthPlanDetails': {
+  ///       'docNo': '详情编号',
+  ///       'remarks': '详情备注',
+  ///     },
+  ///     'testDetails': {
+  ///       'docNo': '测试编号',
+  ///       'remarks': '测试备注',
+  ///     },
+  ///   },
+  /// );
+  /// ```
+  factory FieldLabelConfig.enhanced({
+    Map<String, String> globalMappings = const {},
+    Map<String, Map<String, String>> moduleMappings = const {},
+  }) {
+    return FieldLabelConfig._(
+      Map<String, String>.from(globalMappings),
+      Map<String, Map<String, String>>.from(
+        moduleMappings.map(
+          (key, value) => MapEntry(key, Map<String, String>.from(value)),
+        ),
+      ),
+    );
+  }
+
+  /// 获取字段显示标签（向后兼容）
   String getLabel(String fieldKey) {
+    return _getLabelWithContext(fieldKey, null);
+  }
+
+  /// 获取字段显示标签（支持模块上下文）
+  ///
+  /// ### 参数
+  /// - [fieldKey] 字段键名
+  /// - [moduleId] 模块ID，用于查找模块特定映射
+  ///
+  /// ### 查找优先级
+  /// 1. 模块特定映射：`moduleMappings[moduleId][fieldKey]`
+  /// 2. 全局映射：`globalMappings[fieldKey]`
+  /// 3. 原始字段键：`fieldKey`
+  String getLabelWithModule(String fieldKey, String moduleId) {
+    return _getLabelWithContext(fieldKey, moduleId);
+  }
+
+  /// 内部方法：根据上下文获取标签
+  String _getLabelWithContext(String fieldKey, String? moduleId) {
+    // 优先查找模块特定映射
+    if (moduleId != null && _moduleMappings.containsKey(moduleId)) {
+      final moduleMapping = _moduleMappings[moduleId]!;
+      if (moduleMapping.containsKey(fieldKey)) {
+        return moduleMapping[fieldKey]!;
+      }
+    }
+
+    // 回退到全局映射
     return _labelMappings[fieldKey] ?? fieldKey;
   }
 
@@ -34,13 +114,29 @@ class FieldLabelConfig {
     return getLabel(fieldKey);
   }
 
-  /// 检查是否包含字段映射
-  bool hasMapping(String fieldKey) {
+  /// 通过字符串键获取标签（支持模块上下文）
+  String getLabelByStringWithModule(String fieldKey, String moduleId) {
+    return getLabelWithModule(fieldKey, moduleId);
+  }
+
+  /// 检查是否包含字段映射（全局或模块特定）
+  bool hasMapping(String fieldKey, {String? moduleId}) {
+    if (moduleId != null && _moduleMappings.containsKey(moduleId)) {
+      final moduleMapping = _moduleMappings[moduleId]!;
+      if (moduleMapping.containsKey(fieldKey)) {
+        return true;
+      }
+    }
     return _labelMappings.containsKey(fieldKey);
   }
 
-  /// 获取所有映射
+  /// 获取所有全局映射
   Map<String, String> get allMappings => Map.unmodifiable(_labelMappings);
+
+  /// 获取所有模块映射
+  Map<String, Map<String, String>> get allModuleMappings => Map.unmodifiable(
+    _moduleMappings.map((key, value) => MapEntry(key, Map.unmodifiable(value))),
+  );
 }
 
 /// 字段配置类
@@ -53,18 +149,10 @@ class FieldConfig {
   /// 列宽百分比（0.0-1.0，如0.3表示30%）
   final double? widthPercent;
 
-  /// 排序权重
-  final int sort;
+  /// 排序权重（数值越小排序越靠前，null值排在最后）
+  final int? sort;
 
-  /// 是否必需
-  final bool required;
-
-  const FieldConfig({
-    required this.fieldKey,
-    this.widthPercent,
-    this.sort = 0,
-    this.required = false,
-  });
+  const FieldConfig({required this.fieldKey, this.widthPercent, this.sort});
 
   /// 获取有效的列宽百分比
   double getEffectiveWidthPercent() {
@@ -76,7 +164,7 @@ class FieldConfig {
     return TableField(
       label: label,
       value: value?.toString() ?? '',
-      widthPercent: widthPercent,
+      widthPercent: widthPercent ?? 0.33,
       sort: sort,
     );
   }
@@ -84,34 +172,31 @@ class FieldConfig {
 
 /// 适配器模块配置类
 ///
-/// 定义适配器模块的配置信息
+/// 定义适配器模块的配置信息，支持具体的模块配置类型
 class AdapterModuleConfig {
   /// 模块类型
-  final ModuleTypes moduleType;
-
-  /// 是否启用
-  final bool enabled;
-
-  /// 优先级
-  final int priority;
-
-  /// 是否必需
-  final bool required;
+  final ModuleType moduleType;
 
   /// 字段配置列表
   final List<FieldConfig> fieldConfigs;
 
-  /// 自定义设置
-  final Map<String, dynamic> customSettings;
+  /// 具体的模块配置
+  final BaseModuleConfig? moduleConfig;
 
   const AdapterModuleConfig({
     required this.moduleType,
-    this.enabled = true,
-    this.priority = 0,
-    this.required = false,
     this.fieldConfigs = const [],
-    this.customSettings = const {},
+    this.moduleConfig,
   });
+
+  /// 获取模块是否启用
+  bool get enabled => moduleConfig?.enabled ?? true;
+
+  /// 获取模块优先级
+  int get priority => moduleConfig?.priority ?? 0;
+
+  /// 获取模块是否必需
+  bool get required => moduleConfig?.required ?? false;
 
   /// 获取字段配置
   FieldConfig? getFieldConfig(String fieldKey) {
@@ -121,9 +206,21 @@ class AdapterModuleConfig {
     return null;
   }
 
-  /// 获取自定义设置
-  T? getSetting<T>(String key) {
-    return customSettings[key] as T?;
+  /// 获取具体类型的模块配置
+  ///
+  /// ### 参数
+  /// - [T] 期望的配置类型，必须继承自 BaseModuleConfig
+  /// ### 返回值
+  /// 返回指定类型的配置实例，如果类型不匹配则返回 null
+  /// ### 异常
+  /// 不会抛出类型转换异常，类型不匹配时返回 null
+  T? getTypedModuleConfig<T extends BaseModuleConfig>() {
+    if (moduleConfig is T) {
+      return moduleConfig as T;
+    } else if (moduleConfig != null) {
+      log('模块配置类型不匹配，期望 ${T.toString()}，但实际类型为 ${moduleConfig.runtimeType}');
+    }
+    return null;
   }
 
   /// 获取列宽配置（从FieldConfig中提取，确保类型安全）
@@ -240,15 +337,15 @@ class DataAdapterConfig {
   final FieldLabelConfig fieldLabelConfig;
 
   /// 模块配置映射
-  final Map<ModuleTypes, AdapterModuleConfig> moduleConfigs;
+  final Map<ModuleType, AdapterModuleConfig> moduleConfigs;
 
-  /// 数据键映射
-  final Map<DataKeys, ModuleTypes> dataKeyMappings;
+  /// 扩展的模块描述符集合（支持自定义模块）
+  final Set<ModuleDescriptor> moduleDescriptors;
 
   const DataAdapterConfig({
     required this.fieldLabelConfig,
     required this.moduleConfigs,
-    required this.dataKeyMappings,
+    this.moduleDescriptors = const {},
   });
 
   /// 创建默认配置
@@ -256,24 +353,46 @@ class DataAdapterConfig {
     return DataAdapterConfig(
       fieldLabelConfig: FieldLabelConfig.defaultConfig(),
       moduleConfigs: _createDefaultModuleConfigs(),
-      dataKeyMappings: _createDefaultDataKeyMappings(),
+      moduleDescriptors: _createDefaultModuleDescriptors(),
     );
   }
 
   /// 获取模块配置
-  AdapterModuleConfig? getModuleConfig(ModuleTypes moduleType) {
+  AdapterModuleConfig? getModuleConfig(ModuleType moduleType) {
     return moduleConfigs[moduleType];
   }
 
-  /// 通过数据键获取模块类型
-  ModuleTypes? getModuleTypeByDataKey(DataKeys dataKey) {
-    return dataKeyMappings[dataKey];
-  }
-
   /// 检查模块是否启用
-  bool isModuleEnabled(ModuleTypes moduleType) {
+  bool isModuleEnabled(ModuleType moduleType) {
     final config = moduleConfigs[moduleType];
     return config?.enabled ?? false;
+  }
+
+  /// 通过模块ID获取模块类型
+  ModuleType? getModuleTypeByModuleId(String moduleId) {
+    // 在模块描述符中查找
+    for (final descriptor in moduleDescriptors) {
+      if (descriptor.moduleId == moduleId) {
+        return descriptor.type;
+      }
+    }
+
+    return null;
+  }
+
+  /// 通过模块类型获取第一个匹配的模块ID
+  String? getModuleIdByType(ModuleType type) {
+    for (final descriptor in moduleDescriptors) {
+      if (descriptor.type == type) {
+        return descriptor.moduleId;
+      }
+    }
+    return null;
+  }
+
+  /// 获取所有模块描述符
+  Set<ModuleDescriptor> getAllModuleDescriptors() {
+    return Set.unmodifiable(moduleDescriptors);
   }
 
   /// 获取支持的模块类型列表
@@ -307,13 +426,15 @@ class DataAdapterConfig {
       );
     }
 
-    // 验证数据键映射的完整性
-    for (final moduleType in ModuleTypes.values) {
+    // 验证模块描述符的完整性
+    for (final moduleType in ModuleType.values) {
       final moduleConfig = moduleConfigs[moduleType];
       if (moduleConfig?.enabled == true) {
-        final hasDataKey = dataKeyMappings.values.contains(moduleType);
-        if (!hasDataKey) {
-          allWarnings.add('启用的模块 ${moduleType.value} 没有对应的数据键映射');
+        final hasDescriptor = moduleDescriptors.any(
+          (d) => d.type == moduleType,
+        );
+        if (!hasDescriptor) {
+          allWarnings.add('启用的模块 ${moduleType.value} 没有对应的模块描述符');
         }
       }
     }
@@ -327,55 +448,47 @@ class DataAdapterConfig {
 }
 
 /// 创建默认模块配置
-Map<ModuleTypes, AdapterModuleConfig> _createDefaultModuleConfigs() {
+Map<ModuleType, AdapterModuleConfig> _createDefaultModuleConfigs() {
   return {
-    ModuleTypes.logo: const AdapterModuleConfig(
-      moduleType: ModuleTypes.logo,
-      enabled: true,
-      priority: 1,
-      required: false,
+    ModuleType.logo: const AdapterModuleConfig(
+      moduleType: ModuleType.logo,
+      moduleConfig: LogoConfig(enabled: true, priority: 1, required: false),
     ),
-    ModuleTypes.title: const AdapterModuleConfig(
-      moduleType: ModuleTypes.title,
-      enabled: true,
-      priority: 2,
-      required: false,
+    ModuleType.title: const AdapterModuleConfig(
+      moduleType: ModuleType.title,
+      moduleConfig: TitleConfig(enabled: true, priority: 2, required: false),
     ),
-    ModuleTypes.mainTable: const AdapterModuleConfig(
-      moduleType: ModuleTypes.mainTable,
-      enabled: true,
-      priority: 3,
-      required: false,
+    ModuleType.mainTable: const AdapterModuleConfig(
+      moduleType: ModuleType.mainTable,
+      moduleConfig: MainTableConfig(
+        enabled: true,
+        priority: 3,
+        required: false,
+      ),
     ),
-    ModuleTypes.subTable: const AdapterModuleConfig(
-      moduleType: ModuleTypes.subTable,
-      enabled: true,
-      priority: 4,
-      required: false,
+    ModuleType.subTable: const AdapterModuleConfig(
+      moduleType: ModuleType.subTable,
+      moduleConfig: SubTableConfig(enabled: true, priority: 4, required: false),
     ),
-    ModuleTypes.approval: const AdapterModuleConfig(
-      moduleType: ModuleTypes.approval,
-      enabled: true,
-      priority: 5,
-      required: false,
+    ModuleType.approval: const AdapterModuleConfig(
+      moduleType: ModuleType.approval,
+      moduleConfig: SubTableConfig(enabled: true, priority: 5, required: false),
     ),
-    ModuleTypes.footer: const AdapterModuleConfig(
-      moduleType: ModuleTypes.footer,
-      enabled: true,
-      priority: 6,
-      required: false,
+    ModuleType.footer: const AdapterModuleConfig(
+      moduleType: ModuleType.footer,
+      moduleConfig: FooterConfig(enabled: true, priority: 6, required: false),
     ),
   };
 }
 
-/// 创建默认数据键映射
-Map<DataKeys, ModuleTypes> _createDefaultDataKeyMappings() {
+/// 创建默认模块描述符集合
+Set<ModuleDescriptor> _createDefaultModuleDescriptors() {
   return {
-    DataKeys.logoUrl: ModuleTypes.logo,
-    DataKeys.titles: ModuleTypes.title,
-    DataKeys.mainData: ModuleTypes.mainTable,
-    DataKeys.details: ModuleTypes.subTable,
-    DataKeys.approvals: ModuleTypes.approval,
-    DataKeys.footerData: ModuleTypes.footer,
+    ModuleDescriptor.logo,
+    ModuleDescriptor.title,
+    ModuleDescriptor.mainTable,
+    ModuleDescriptor.subTable,
+    ModuleDescriptor.approval,
+    ModuleDescriptor.footer,
   };
 }

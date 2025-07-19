@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf_export_print/src/themes/themes.dart';
 
 /// PDF上下文，提供渲染时的环境信息
@@ -16,7 +16,7 @@ class PDFContext {
   final StyleTheme theme;
 
   /// 页面边距
-  final EdgeInsets margins;
+  final pw.EdgeInsets margins;
 
   PDFContext({
     required this.availableWidth,

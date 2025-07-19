@@ -8,28 +8,35 @@ import 'package:pdf_export_print/src/models/models.dart';
 import 'dart:developer' as dev;
 
 import 'package:pdf_export_print/src/core/core.dart';
-import 'package:pdf_export_print/src/data/data.dart';
 
 /// Logo模块，用于在PDF页面左上角显示Logo图片
 class LogoModule extends PDFModule {
   final LogoConfig _config;
+  final ModuleDescriptor _descriptor;
 
-  LogoModule({LogoConfig? config})
-    : _config = config ?? LogoConfig.defaultConfig();
+  LogoModule({LogoConfig? config, required ModuleDescriptor descriptor})
+    : this._internal(config ?? LogoConfig.defaultConfig(), descriptor);
 
-  @override
-  String get moduleId => 'logo';
-
-  @override
-  int get priority => 10; // 高优先级，优先渲染
+  LogoModule._internal(this._config, this._descriptor) : super(_config);
 
   @override
-  ModuleConfig get config => _config.moduleConfig;
+  ModuleDescriptor get descriptor => _descriptor;
 
   @override
-  Future<List<pw.Widget>> render(ModuleData data, PDFContext context) async {
-    // 直接使用LogoData，适配器保证输入类型正确
-    final logoData = data as LogoData;
+  Future<List<pw.Widget>> render(
+    ModuleDescriptor descriptor,
+    PDFContext context,
+  ) async {
+    // 直接使用 ModuleDescriptor 中的数据，或者如果传入的就是 LogoData 则直接使用
+    final LogoData logoData;
+
+    if (descriptor is LogoData) {
+      // 如果传入的就是 LogoData，直接使用
+      logoData = descriptor;
+    } else {
+      // 从 ModuleDescriptor.data 创建 LogoData
+      logoData = LogoData.fromDescriptor(descriptor);
+    }
 
     if (logoData.logoUrl.isEmpty) {
       return [];
@@ -52,13 +59,11 @@ class LogoModule extends PDFModule {
       return [
         pw.Container(
           width: context.availableWidth,
-          child: pw.Align(
-            alignment: alignment,
-            child: pw.Container(
-              width: width,
-              height: height,
-              child: pw.Image(image, fit: pw.BoxFit.contain),
-            ),
+          alignment: alignment,
+          child: pw.SizedBox(
+            width: width,
+            height: height,
+            child: pw.Image(image, fit: pw.BoxFit.contain),
           ),
         ),
         pw.SizedBox(height: _config.bottomSpacing),
@@ -70,10 +75,18 @@ class LogoModule extends PDFModule {
   }
 
   @override
-  bool canRender(ModuleData data) {
-    // 直接使用LogoData，适配器保证输入类型正确
-    final logoData = data as LogoData;
-    return logoData.logoUrl.isNotEmpty;
+  bool canRender(ModuleDescriptor descriptor) {
+    try {
+      final LogoData logoData;
+      if (descriptor is LogoData) {
+        logoData = descriptor;
+      } else {
+        logoData = LogoData.fromDescriptor(descriptor);
+      }
+      return logoData.logoUrl.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// 从URL加载图片数据

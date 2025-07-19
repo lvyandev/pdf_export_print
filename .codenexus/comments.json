@@ -1,12 +1,27 @@
 {
   "file_comments": {
-    "lib/src/core/data_adapter.dart": "文件重构完成：将 TypeSafeDataAdapter 类从独立的 adapters 文件夹整合到 core/data_adapter.dart 文件中。现在数据适配器相关的所有代码都统一在一个文件中，简化了项目结构，删除了 adapters 文件夹。",
-    "lib/src/adapters/type_safe_data_adapter.dart": "完善文档注释和逻辑优化：为所有公共方法和核心私有方法添加了完整的Dart文档注释，改进了错误信息的准确性和可读性，添加了边界情况处理和详细的内联注释。现在代码具有完整的文档覆盖和健壮的错误处理机制。",
-    "example/lib/main.dart": "重构 SimpleDataAdapter：从直接继承 DataAdapter 改为基于 TypeSafeDataAdapter 的委托实现，解决类型转换异常问题。新实现提供类型安全的数据适配，同时保持向后兼容性。",
+    "lib/src/components/custom_table_layout.dart": "修复主表布局问题并更新排序逻辑：重构了_buildRowWidgets和_groupFieldsIntoRows方法，确保字段按照widthPercent正确占据行内空间。修复了6等份网格系统的缺陷，改为基于widthPercent的直接比例布局，支持fieldsPerRow配置。字段内部标题占1/6，内容占剩余空间。同时更新排序逻辑为升序（数值越小越靠前），null值排在最后。",
+    "lib/src/modules/sub_table_module.dart": "子表模块：实现PDF中子表的渲染功能，支持图片展示、字段排序、动态列配置等高级特性。集成了图片自适应缩放算法，确保图片内容在表格中的最佳展示效果。",
+    "lib/src/components/common_table_widget.dart": "更新排序逻辑：修改_sortTableDataWithFields方法中的排序算法，改为升序排列（数值越小越靠前），null值排在最后。与TableField和FieldConfig的sort字段修改保持一致。",
+    "lib/src/data/table_field.dart": "修改sort字段排序逻辑：将sort类型从int改为int?，默认值从0改为null，排序逻辑改为数值越小越靠前（升序），null值排在最后。更新了所有相关的构造函数和便捷方法。",
+    "lib/src/components/cell_renderer.dart": "单元格渲染器：负责表格单元格内容的渲染，支持文本、图片等多种数据类型。实现了图片自适应缩放功能，确保图片在保持比例的同时适应列宽限制，不破坏表格布局。",
+    "lib/src/configs/logo_config.dart": "Logo配置类：已清理僵尸参数enableCache、timeoutSeconds、requestHeaders，这些参数在LogoModule中从未使用，简化了配置结构",
+    "lib/src/core/pdf_module.dart": "PDF模块基类：定义所有PDF模块（标题、Logo、表格、页脚等）的通用接口和行为规范。实现模块化架构，支持插件式的功能扩展和组合。",
+    "lib/src/core/pdf_config.dart": "PDF配置管理类：定义PDF文档的全局配置，包括页面设置、主题选择、模块启用状态等。作为配置驱动架构的核心，统一管理所有PDF生成相关的参数。",
+    "lib/src/core/module_descriptor.dart": "模块描述符类：定义模块的元数据和配置信息，包括模块类型、数据键映射、配置参数等。支持类型安全的模块配置和动态模块加载，是新架构中模块管理的核心组件。",
     "README.md": "已更新为重点突出类型安全和配置驱动架构的主文档，包含快速开始、核心概念、使用指南、迁移指南和API参考",
-    "lib/src/modules/sub_table_module.dart": "重构完成：统一的表格模块，通过moduleId参数和配置区分子表和审批记录，消除了ApprovalModule的重复代码，支持标题显示和自定义配置。现在使用TableField统一处理表头和数据，简化了数据模型。",
-    "lib/src/components/common_table_widget.dart": "重构完成：移除了冗余的TableHeader类，统一使用TableField进行表头排序。TableField的value字段用作键名，label字段用作显示标签，sort字段用于排序权重。这简化了数据模型，消除了功能重复。",
+    "lib/src/core/data_adapter.dart": "图片显示问题修复：修改TypeSafeDataAdapter保持原始数据类型，添加_isImageUrl和_isImageField方法进行智能图片识别，新增_createTableFieldWithImageDetection方法自动创建ImageContent，支持picsum.photos等图片服务域名和字段名关键词识别，解决图片URL显示为字符串的问题。文件重构完成：将 TypeSafeDataAdapter 类从独立的 adapters 文件夹整合到 core/data_adapter.dart 文件中。现在数据适配器相关的所有代码都统一在一个文件中，简化了项目结构，删除了 adapters 文件夹。",
+    "example/lib/main.dart": "项目唯一的示例文件：合并了TypeSafe适配器配置和完整的控制面板功能，包含图片展示功能，支持模块开关、边框控制、水印配置等完整功能。符合Flutter包项目标准结构。",
     "lib/src/config/adapter_config.dart": "简化的配置管理类，使用字符串键名进行字段标签映射，专注于模块级别的配置管理，避免硬编码具体业务字段",
-    "lib/src/constants/adapter_constants.dart": "简化的类型安全枚举常量，只定义模块级别的常量（DataKeys, ModuleTypes, ModuleDataKeys），避免过度具体化的字段枚举，让业务字段映射由适配器自行处理"
+    "lib/src/constants/adapter_constants.dart": "简化的类型安全枚举常量，只定义模块级别的常量（DataKeys, ModuleTypes, ModuleDataKeys），避免过度具体化的字段枚举，让业务字段映射由适配器自行处理",
+    "lib/src/modules/main_table_module.dart": "主表模块：实现PDF中主表的渲染功能，支持字段排序、动态列配置、样式定制等特性。作为核心数据展示组件，提供标准化的表格渲染接口。",
+    "lib/src/core/pdf_builder.dart": "PDF构建器核心类：已优化模块渲染逻辑，使用单循环处理按优先级排序的模块描述符。通过预处理创建包含优先级信息的描述符列表，避免嵌套循环，提高性能。支持一个ModuleType对应多个ModuleDescriptor的场景。",
+    "lib/src/configs/sub_table_config.dart": "子表配置类：已优化高度参数设计，headerHeight改为可空类型支持自适应，移除无用的reservedHeight参数，与rowHeight设计理念保持一致",
+    "lib/main.dart": "合并后的主示例文件：整合了TypeSafe适配器配置和完整的控制面板功能，包含图片展示功能，支持模块开关、边框控制、水印配置等完整功能",
+    "lib/src/adapters/type_safe_data_adapter.dart": "完善文档注释和逻辑优化：为所有公共方法和核心私有方法添加了完整的Dart文档注释，改进了错误信息的准确性和可读性，添加了边界情况处理和详细的内联注释。现在代码具有完整的文档覆盖和健壮的错误处理机制。",
+    "lib/src/core/pdf_context.dart": "PDF上下文管理类：在PDF生成过程中维护全局状态和共享资源，包括当前页面信息、主题设置、数据上下文等。为各个模块提供统一的运行时环境。",
+    "lib/src/configs/footer_config.dart": "页脚配置类：已清理僵尸参数cellHeight、labelAlignment、contentAlignment，这些参数在CustomTableLayout中不支持，简化了配置结构",
+    "lib/src/configs/adapter_config.dart": "适配器配置类：已清理FieldConfig中的僵尸参数required，该参数虽在文档中提及但实际验证逻辑中未实现，简化了字段配置结构。使用字符串键名进行字段标签映射，专注于模块级别的配置管理",
+    "docs/使用指南.md": "使用指南文档：已更新FieldConfig示例，移除了已删除的required参数，保持与代码实现的一致性"
   }
 }

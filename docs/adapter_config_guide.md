@@ -87,12 +87,12 @@ required: true  // 或 false
 
 **验证逻辑**：
 ```dart
-// 在 validateData 方法中
-for (final moduleType in ModuleTypes.values) {
+// 在配置验证中
+for (final moduleType in ModuleType.values) {
   final moduleConfig = _config.getModuleConfig(moduleType);
   if (moduleConfig?.required == true) {
-    final requiredDataKey = _getDataKeyForModule(moduleType);
-    if (requiredDataKey != null && !rawData.containsKey(requiredDataKey.value)) {
+    // 检查模块是否有对应的数据
+    if (!_hasRequiredDataForModule(moduleType, rawData)) {
       return false; // 验证失败
     }
   }
@@ -104,31 +104,34 @@ for (final moduleType in ModuleTypes.values) {
 - 业务规则验证
 - 数据完整性检查
 
-### 5. customSettings (自定义设置)
+### 5. moduleConfig (模块配置)
 
 ```dart
-customSettings: {
-  'defaultWidth': 150.0,
-  'defaultHeight': 75.0,
-  'showBorder': true,
-}
+moduleConfig: LogoConfig(
+  enabled: true,
+  priority: 1,
+  defaultWidth: 150.0,
+  defaultHeight: 75.0,
+  alignment: Alignment.topLeft,
+)
 ```
 
-**作用**：存储模块特定的配置参数，可在适配过程中使用。
+**作用**：存储模块特定的类型安全配置参数。
 
 **获取方式**：
 ```dart
-// 在适配器中获取自定义设置
-final moduleConfig = _config.getModuleConfig(ModuleTypes.logo);
-final width = moduleConfig?.getSetting<double>('defaultWidth') ?? 100.0;
-final height = moduleConfig?.getSetting<double>('defaultHeight') ?? 50.0;
+// 在适配器中获取模块配置
+final moduleConfig = _config.getModuleConfig(ModuleType.logo);
+final logoConfig = moduleConfig?.getTypedModuleConfig<LogoConfig>();
+final width = logoConfig?.defaultWidth ?? 100.0;
+final height = logoConfig?.defaultHeight ?? 50.0;
 ```
 
 **使用场景**：
 - Logo尺寸配置
 - 表格样式设置
 - 模块特定的业务参数
-- 扩展功能配置
+- 类型安全的配置管理
 
 ## 实际应用示例
 
@@ -138,17 +141,21 @@ final height = moduleConfig?.getSetting<double>('defaultHeight') ?? 50.0;
 // 根据用户类型显示不同模块
 final isAdmin = user.role == 'admin';
 
-final moduleConfigs = <ModuleTypes, AdapterModuleConfig>{
-  ModuleTypes.logo: AdapterModuleConfig(
-    moduleType: ModuleTypes.logo,
-    enabled: true,
-    priority: 1,
+final moduleConfigs = <ModuleType, AdapterModuleConfig>{
+  ModuleType.logo: AdapterModuleConfig(
+    moduleType: ModuleType.logo,
+    moduleConfig: LogoConfig(
+      enabled: true,
+      priority: 1,
+    ),
   ),
-  ModuleTypes.approval: AdapterModuleConfig(
-    moduleType: ModuleTypes.approval,
-    enabled: isAdmin, // 只有管理员才显示审批信息
-    priority: 5,
-    required: isAdmin,
+  ModuleType.approval: AdapterModuleConfig(
+    moduleType: ModuleType.approval,
+    moduleConfig: SubTableConfig(
+      enabled: isAdmin, // 只有管理员才显示审批信息
+      priority: 5,
+      required: isAdmin,
+    ),
   ),
 };
 ```
@@ -156,26 +163,26 @@ final moduleConfigs = <ModuleTypes, AdapterModuleConfig>{
 ### 场景2：自定义模块样式
 
 ```dart
-final moduleConfigs = <ModuleTypes, AdapterModuleConfig>{
-  ModuleTypes.logo: AdapterModuleConfig(
-    moduleType: ModuleTypes.logo,
-    enabled: true,
-    priority: 1,
-    customSettings: {
-      'width': company.logoWidth,
-      'height': company.logoHeight,
-      'alignment': 'center',
-    },
+final moduleConfigs = <ModuleType, AdapterModuleConfig>{
+  ModuleType.logo: AdapterModuleConfig(
+    moduleType: ModuleType.logo,
+    moduleConfig: LogoConfig(
+      enabled: true,
+      priority: 1,
+      defaultWidth: company.logoWidth,
+      defaultHeight: company.logoHeight,
+      alignment: Alignment.center,
+    ),
   ),
-  ModuleTypes.mainTable: AdapterModuleConfig(
-    moduleType: ModuleTypes.mainTable,
-    enabled: true,
-    priority: 3,
-    customSettings: {
-      'columnsPerRow': 6,
-      'showBorder': true,
-      'cellPadding': 8.0,
-    },
+  ModuleType.mainTable: AdapterModuleConfig(
+    moduleType: ModuleType.mainTable,
+    moduleConfig: MainTableConfig(
+      enabled: true,
+      priority: 3,
+      maxColumnsPerRow: 6,
+      showBorder: true,
+      cellPadding: EdgeInsets.all(8.0),
+    ),
   ),
 };
 ```
@@ -215,8 +222,8 @@ final moduleConfigs = <ModuleTypes, AdapterModuleConfig>{
 ## 配置的生命周期
 
 1. **创建阶段**：在 `DataAdapterConfig` 中定义模块配置
-2. **验证阶段**：`validateData()` 检查必需模块的数据
-3. **适配阶段**：`adaptData()` 根据 `enabled` 状态处理模块
+2. **验证阶段**：配置验证检查必需模块的设置
+3. **适配阶段**：`adaptModuleData()` 根据 `enabled` 状态处理模块
 4. **渲染阶段**：PDF构建器根据 `priority` 排序并渲染模块
 
 通过合理配置这些参数，可以实现灵活、可控的PDF生成流程。

@@ -10,6 +10,9 @@ library;
 // 适配器配置
 export 'adapter_config.dart';
 
+// 基础模块配置
+export 'base_module_config.dart';
+
 // 主表配置
 export 'main_table_config.dart';
 
@@ -23,7 +26,6 @@ export 'title_config.dart';
 export 'sub_table_config.dart';
 
 // 样式配置
-export 'table_style.dart';
 export 'field_style.dart';
 
 // Logo配置
@@ -35,6 +37,3 @@ export 'common_table_config.dart';
 
 // 水印配置
 export 'watermark_config.dart';
-
-// 模块配置
-export 'module_config.dart';

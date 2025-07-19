@@ -1,7 +1,10 @@
-import 'package:pdf_export_print/src/data/data.dart';
+import 'package:pdf_export_print/src/constants/constants.dart';
+import 'package:pdf_export_print/src/core/core.dart';
 
 /// 标题数据模型
-class TitleData extends ModuleData {
+///
+/// 继承自 ModuleDescriptor，提供强类型的标题数据结构
+class TitleData extends ModuleDescriptor {
   /// 标题列表
   final List<String> titles;
 
@@ -11,18 +14,19 @@ class TitleData extends ModuleData {
   /// 对齐方式
   final String? alignment;
 
-  TitleData({required this.titles, this.color, this.alignment})
-    : super(
-        moduleType: 'title',
-        data: {
-          'titles': titles,
-          if (color != null) 'color': color,
-          if (alignment != null) 'alignment': alignment,
-        },
-      );
+  TitleData({
+    required this.titles,
+    this.color,
+    this.alignment,
+    String? moduleId,
+  }) : super(ModuleType.title, moduleId ?? 'title', {
+         'titles': titles,
+         if (color != null) 'color': color,
+         if (alignment != null) 'alignment': alignment,
+       });
 
   /// 从Map创建
-  factory TitleData.fromMap(Map<String, dynamic> map) {
+  factory TitleData.fromMap(Map<String, dynamic> map, {String? moduleId}) {
     final titlesData = map['titles'] as List<dynamic>? ?? [];
     final titles = titlesData.whereType<String>().toList();
 
@@ -30,69 +34,23 @@ class TitleData extends ModuleData {
       titles: titles,
       color: map['color'] as String?,
       alignment: map['alignment'] as String?,
+      moduleId: moduleId,
     );
   }
 
-  /// 转换为Map
-  Map<String, dynamic> toMap() {
-    return {
-      'titles': titles,
-      if (color != null) 'color': color,
-      if (alignment != null) 'alignment': alignment,
-    };
+  /// 从 ModuleDescriptor 创建
+  factory TitleData.fromDescriptor(ModuleDescriptor descriptor) {
+    if (descriptor.type != ModuleType.title) {
+      throw ArgumentError('ModuleDescriptor type must be title');
+    }
+
+    if (descriptor.data is Map<String, dynamic>) {
+      return TitleData.fromMap(
+        descriptor.data as Map<String, dynamic>,
+        moduleId: descriptor.moduleId,
+      );
+    }
+
+    throw ArgumentError('Invalid data format for TitleData');
   }
-}
-
-/// 标题构建器
-class TitleBuilder {
-  final List<String> _titles = [];
-  String? _color;
-  String? _alignment;
-
-  /// 添加标题
-  TitleBuilder addTitle(String title) {
-    _titles.add(title);
-    return this;
-  }
-
-  /// 添加多个标题
-  TitleBuilder addTitles(List<String> titles) {
-    _titles.addAll(titles);
-    return this;
-  }
-
-  /// 设置颜色
-  TitleBuilder setColor(String color) {
-    _color = color;
-    return this;
-  }
-
-  /// 设置对齐方式
-  TitleBuilder setAlignment(String alignment) {
-    _alignment = alignment;
-    return this;
-  }
-
-  /// 构建数据
-  TitleData build() {
-    return TitleData(
-      titles: List.from(_titles),
-      color: _color,
-      alignment: _alignment,
-    );
-  }
-
-  /// 清空
-  TitleBuilder clear() {
-    _titles.clear();
-    _color = null;
-    _alignment = null;
-    return this;
-  }
-
-  /// 获取标题数量
-  int get titleCount => _titles.length;
-
-  /// 获取标题列表
-  List<String> get titles => List.unmodifiable(_titles);
 }

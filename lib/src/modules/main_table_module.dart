@@ -8,23 +8,33 @@ import 'package:pdf_export_print/src/models/models.dart';
 /// 主表模块，用于显示6列表格形式的主表数据
 class MainTableModule extends PDFModule {
   final MainTableConfig _config;
+  final ModuleDescriptor _descriptor;
 
-  MainTableModule({MainTableConfig? config})
-    : _config = config ?? MainTableConfig.defaultConfig();
+  MainTableModule({
+    MainTableConfig? config,
+    required ModuleDescriptor descriptor,
+  }) : this._internal(config ?? MainTableConfig.defaultConfig(), descriptor);
 
-  @override
-  String get moduleId => 'main_table';
-
-  @override
-  int get priority => 30; // 中等优先级
-
-  @override
-  ModuleConfig get config => _config.moduleConfig;
+  MainTableModule._internal(this._config, this._descriptor) : super(_config);
 
   @override
-  Future<List<pw.Widget>> render(ModuleData data, PDFContext context) async {
-    // 直接使用MainTableData，适配器保证输入类型正确
-    final mainTableData = data as MainTableData;
+  ModuleDescriptor get descriptor => _descriptor;
+
+  @override
+  Future<List<pw.Widget>> render(
+    ModuleDescriptor descriptor,
+    PDFContext context,
+  ) async {
+    // 直接使用 ModuleDescriptor 中的数据，或者如果传入的就是 MainTableData 则直接使用
+    final MainTableData mainTableData;
+
+    if (descriptor is MainTableData) {
+      // 如果传入的就是 MainTableData，直接使用
+      mainTableData = descriptor;
+    } else {
+      // 从 ModuleDescriptor.data 创建 MainTableData
+      mainTableData = MainTableData.fromDescriptor(descriptor);
+    }
 
     if (mainTableData.fields.isEmpty) {
       return [];
@@ -50,10 +60,18 @@ class MainTableModule extends PDFModule {
   }
 
   @override
-  bool canRender(ModuleData data) {
-    // 直接使用MainTableData，适配器保证输入类型正确
-    final mainTableData = data as MainTableData;
-    return mainTableData.fields.isNotEmpty;
+  bool canRender(ModuleDescriptor descriptor) {
+    try {
+      final MainTableData mainTableData;
+      if (descriptor is MainTableData) {
+        mainTableData = descriptor;
+      } else {
+        mainTableData = MainTableData.fromDescriptor(descriptor);
+      }
+      return mainTableData.fields.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// 构建表格
@@ -66,12 +84,13 @@ class MainTableModule extends PDFModule {
     final showBorder = _config.showBorder;
 
     // 使用自定义表格布局组件
-    final layoutConfig = CustomTableConfig.forMainTable(
+    final layoutConfig = CustomTableConfig(
       showBorder: showBorder,
       showInnerBorder: _config.showInnerBorder,
       borderColor: _config.borderColor,
       borderWidth: _config.borderWidth,
       cellPadding: _config.cellPadding,
+      maxColumnsPerRow: _config.fieldsPerRow,
       labelFontSize: _config.labelFontSize,
       contentFontSize: _config.contentFontSize,
       labelColor: _config.labelColor,

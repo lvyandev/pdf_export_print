@@ -15,8 +15,8 @@ class CommonTableConfig {
   /// 单元格内边距
   final pw.EdgeInsets cellPadding;
 
-  /// 表头高度
-  final double headerHeight;
+  /// 表头高度（null时自适应）
+  final double? headerHeight;
 
   /// 数据行高度
   final double? rowHeight;
@@ -45,12 +45,15 @@ class CommonTableConfig {
   /// 默认列宽配置
   final List<double>? defaultColumnWidths;
 
+  /// 单元格垂直对齐方式
+  final pw.TableCellVerticalAlignment cellVerticalAlignment;
+
   const CommonTableConfig({
     this.showBorder = true,
     this.borderColor,
     this.borderWidth,
     this.cellPadding = const pw.EdgeInsets.all(4),
-    this.headerHeight = 25.0,
+    this.headerHeight,
     this.rowHeight,
     this.headerFontSize,
     this.dataFontSize,
@@ -60,5 +63,6 @@ class CommonTableConfig {
     this.headerAlignment = pw.Alignment.center,
     this.dataAlignment = pw.Alignment.centerLeft,
     this.defaultColumnWidths,
+    this.cellVerticalAlignment = pw.TableCellVerticalAlignment.middle,
   });
 }

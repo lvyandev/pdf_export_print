@@ -7,6 +7,8 @@ import 'package:pdf_export_print/src/core/core.dart';
 import 'package:pdf_export_print/src/themes/themes.dart';
 
 /// PDF构建器主类
+///
+/// 数据现在完全来自 ModuleDescriptor，不再需要外部传入数据
 class PDFPrintBuilder {
   PDFConfig? _config;
   DataAdapter? _dataAdapter;
@@ -47,13 +49,12 @@ class PDFPrintBuilder {
 
   /// 构建PDF文档
   ///
-  /// ### 参数
-  /// - [data] 原始业务数据
+  /// 数据完全来自 ModuleDescriptor，无需外部传入
   /// ### 返回值
   /// 返回生成的PDF文档
   /// ### 异常
   /// 如果配置或适配器未设置，抛出StateError
-  Future<pw.Document> build(Map<String, dynamic> data) async {
+  Future<pw.Document> build() async {
     // 初始化中文字体支持
     await DefaultTheme.initChineseFont();
     // 验证必需的组件
@@ -64,41 +65,50 @@ class PDFPrintBuilder {
       throw StateError('数据适配器未设置，请调用withDataAdapter()方法');
     }
 
-    // 验证数据
-    if (!_dataAdapter!.validateData(data)) {
-      throw ArgumentError('输入数据验证失败');
-    }
-
-    // 适配数据
-    final adaptedData = _dataAdapter!.adaptData(data);
-
-    // 创建PDF文档
-    final pdf = pw.Document();
-
     // 创建PDF上下文
     final context = _createPDFContext();
-
-    // 按优先级排序模块（数值越小优先级越高）
-    final sortedModules = List<PDFModule>.from(_modules)
-      ..sort((a, b) => a.priority.compareTo(b.priority));
 
     // 渲染所有模块
     final List<pw.Widget> allWidgets = [];
 
-    for (final module in sortedModules) {
-      if (!module.config.enabled) continue;
+    // 预处理：创建包含优先级信息的描述符列表，实现单循环优化
+    final descriptorWithPriorities =
+        <({ModuleDescriptor descriptor, int priority})>[];
 
-      final moduleData = adaptedData[module.moduleId];
-      if (moduleData != null && module.canRender(moduleData)) {
-        try {
-          final widgets = await module.render(moduleData, context);
-          allWidgets.addAll(widgets);
-        } catch (e) {
-          // 记录错误但继续处理其他模块
-          log('模块 ${module.moduleId} 渲染失败: $e');
-        }
+    for (final descriptor in _dataAdapter!.config.moduleDescriptors) {
+      final moduleConfig = _dataAdapter!.config.moduleConfigs[descriptor.type];
+      if (moduleConfig != null && moduleConfig.enabled) {
+        descriptorWithPriorities.add((
+          descriptor: descriptor,
+          priority: moduleConfig.priority,
+        ));
       }
     }
+
+    // 按优先级排序所有描述符（数值越小优先级越高）
+    descriptorWithPriorities.sort((a, b) => a.priority.compareTo(b.priority));
+
+    // 单循环处理所有排序后的描述符
+    for (final item in descriptorWithPriorities) {
+      final descriptor = item.descriptor;
+
+      try {
+        // 使用适配器将描述符转换为模块实例
+        final module = _dataAdapter!.adaptModule(descriptor);
+        if (module != null && module.canRender(module.descriptor)) {
+          log('开始渲染模块: ${module.descriptor}');
+          addModule(module);
+          final widgets = await module.render(module.descriptor, context);
+          allWidgets.addAll(widgets);
+        }
+      } catch (e) {
+        // 记录错误但继续处理其他模块
+        log('模块 ${descriptor.moduleId} 渲染失败: $e');
+      }
+    }
+
+    // 创建PDF文档
+    final pdf = pw.Document();
 
     // 添加页面到PDF
     if (allWidgets.isNotEmpty) {
@@ -119,16 +129,22 @@ class PDFPrintBuilder {
           pw.MultiPage(
             pageFormat: _config!.pageSize,
             orientation: _config!.orientation,
-            margin: pw.EdgeInsets.only(
-              left: _config!.margins.left,
-              top: _config!.margins.top,
-              right: _config!.margins.right,
-              bottom: _config!.margins.bottom,
-            ),
+            margin: _config!.margins,
             build: (pw.Context pdfContext) => allWidgets,
           ),
         );
       }
+    } else {
+      log('没有可渲染的模块');
+      pdf.addPage(
+        pw.Page(
+          pageFormat: _config!.pageSize,
+          orientation: _config!.orientation,
+          margin: _config!.margins,
+          build: (pw.Context pdfContext) =>
+              pw.Center(child: pw.Text('No modules!')),
+        ),
+      );
     }
 
     return pdf;
@@ -183,12 +199,7 @@ class PDFPrintBuilder {
       return pw.PageTheme(
         pageFormat: _config!.pageSize,
         orientation: _config!.orientation,
-        margin: pw.EdgeInsets.only(
-          left: _config!.margins.left,
-          top: _config!.margins.top,
-          right: _config!.margins.right,
-          bottom: _config!.margins.bottom,
-        ),
+        margin: _config!.margins,
         buildBackground: (pw.Context context) => pw.FullPage(
           ignoreMargins: true,
           child: _positionWatermark(watermarkWidget!, watermarkConfig.position),
@@ -199,12 +210,7 @@ class PDFPrintBuilder {
       return pw.PageTheme(
         pageFormat: _config!.pageSize,
         orientation: _config!.orientation,
-        margin: pw.EdgeInsets.only(
-          left: _config!.margins.left,
-          top: _config!.margins.top,
-          right: _config!.margins.right,
-          bottom: _config!.margins.bottom,
-        ),
+        margin: _config!.margins,
         buildForeground: (pw.Context context) => pw.FullPage(
           ignoreMargins: true,
           child: _positionWatermark(watermarkWidget!, watermarkConfig.position),
@@ -336,7 +342,9 @@ class PDFPrintBuilder {
   /// ### 返回值
   /// 如果成功移除返回true，否则返回false
   bool removeModule(String moduleId) {
-    final index = _modules.indexWhere((module) => module.moduleId == moduleId);
+    final index = _modules.indexWhere(
+      (module) => module.descriptor.moduleId == moduleId,
+    );
     if (index != -1) {
       _modules.removeAt(index);
       return true;
@@ -356,7 +364,7 @@ class PDFPrintBuilder {
   /// ### 返回值
   /// 如果包含该模块返回true，否则返回false
   bool hasModule(String moduleId) {
-    return _modules.any((module) => module.moduleId == moduleId);
+    return _modules.any((module) => module.descriptor.moduleId == moduleId);
   }
 
   /// 获取指定模块
@@ -367,7 +375,9 @@ class PDFPrintBuilder {
   /// 返回模块实例，如果不存在返回null
   PDFModule? getModule(String moduleId) {
     try {
-      return _modules.firstWhere((module) => module.moduleId == moduleId);
+      return _modules.firstWhere(
+        (module) => module.descriptor.moduleId == moduleId,
+      );
     } catch (e) {
       return null;
     }
@@ -381,7 +391,9 @@ class PDFPrintBuilder {
   /// ### 返回值
   /// 如果成功替换返回true，否则返回false
   bool replaceModule(String moduleId, PDFModule newModule) {
-    final index = _modules.indexWhere((module) => module.moduleId == moduleId);
+    final index = _modules.indexWhere(
+      (module) => module.descriptor.moduleId == moduleId,
+    );
     if (index != -1) {
       _modules[index] = newModule;
       return true;

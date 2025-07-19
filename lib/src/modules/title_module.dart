@@ -2,30 +2,37 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf_export_print/src/configs/configs.dart';
 import 'package:pdf_export_print/src/core/core.dart';
-import 'package:pdf_export_print/src/data/data.dart';
 import 'package:pdf_export_print/src/models/models.dart';
 import 'package:pdf_export_print/src/themes/themes.dart';
 
 /// 标题模块，用于显示多行居中的红色标题
 class TitleModule extends PDFModule {
   final TitleConfig _config;
+  final ModuleDescriptor _descriptor;
 
-  TitleModule({TitleConfig? config})
-    : _config = config ?? TitleConfig.defaultConfig();
+  TitleModule({TitleConfig? config, required ModuleDescriptor descriptor})
+    : this._internal(config ?? TitleConfig.defaultConfig(), descriptor);
 
-  @override
-  String get moduleId => 'title';
-
-  @override
-  int get priority => 20; // 中等优先级
+  TitleModule._internal(this._config, this._descriptor) : super(_config);
 
   @override
-  ModuleConfig get config => _config.moduleConfig;
+  ModuleDescriptor get descriptor => _descriptor;
 
   @override
-  Future<List<pw.Widget>> render(ModuleData data, PDFContext context) async {
-    // 直接使用TitleData，适配器保证输入类型正确
-    final titleData = data as TitleData;
+  Future<List<pw.Widget>> render(
+    ModuleDescriptor descriptor,
+    PDFContext context,
+  ) async {
+    // 直接使用 ModuleDescriptor 中的数据，或者如果传入的就是 TitleData 则直接使用
+    final TitleData titleData;
+
+    if (descriptor is TitleData) {
+      // 如果传入的就是 TitleData，直接使用
+      titleData = descriptor;
+    } else {
+      // 从 ModuleDescriptor.data 创建 TitleData
+      titleData = TitleData.fromDescriptor(descriptor);
+    }
 
     if (titleData.titles.isEmpty) {
       return [];
@@ -60,10 +67,18 @@ class TitleModule extends PDFModule {
   }
 
   @override
-  bool canRender(ModuleData data) {
-    // 直接使用TitleData，适配器保证输入类型正确
-    final titleData = data as TitleData;
-    return titleData.titles.isNotEmpty;
+  bool canRender(ModuleDescriptor descriptor) {
+    try {
+      final TitleData titleData;
+      if (descriptor is TitleData) {
+        titleData = descriptor;
+      } else {
+        titleData = TitleData.fromDescriptor(descriptor);
+      }
+      return titleData.titles.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// 构建标题Widget
@@ -95,22 +110,20 @@ class TitleModule extends PDFModule {
 
     return pw.Container(
       width: context.availableWidth,
-      child: pw.Align(
-        alignment: alignment,
-        child: pw.Text(
-          title,
-          style: pw.TextStyle(
-            color: color,
-            fontSize: fontSize,
-            font:
-                DefaultTheme.getFontByWeight(
-                  _getFontWeightValue(_config.fontWeight),
-                ) ??
-                font,
-            fontWeight: _config.fontWeight,
-          ),
-          textAlign: _getTextAlign(alignment),
+      alignment: alignment,
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          color: color,
+          fontSize: fontSize,
+          font:
+              DefaultTheme.getFontByWeight(
+                _getFontWeightValue(_config.fontWeight),
+              ) ??
+              font,
+          fontWeight: _config.fontWeight,
         ),
+        textAlign: _getTextAlign(alignment),
       ),
     );
   }
@@ -179,6 +192,7 @@ class TitleModule extends PDFModule {
         bottomSpacing: _config.bottomSpacing,
         titleSpacing: _config.titleSpacing,
       ),
+      descriptor: _descriptor,
     );
   }
 

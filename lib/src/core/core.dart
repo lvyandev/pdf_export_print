@@ -11,6 +11,7 @@ library;
 export 'pdf_config.dart';
 
 // 模块系统
+export 'module_descriptor.dart';
 export 'pdf_module.dart';
 
 // 数据适配

@@ -1,7 +1,12 @@
+import 'package:pdf_export_print/src/constants/adapter_constants.dart';
+import 'package:pdf_export_print/src/constants/constants.dart';
+import 'package:pdf_export_print/src/core/core.dart';
 import 'package:pdf_export_print/src/data/data.dart';
 
 /// 主表数据模型（同时支持主表和页脚）
-class MainTableData extends ModuleData {
+///
+/// 继承自 ModuleDescriptor，提供强类型的主表数据结构
+class MainTableData extends ModuleDescriptor {
   /// 表格字段列表
   final List<TableField> fields;
 
@@ -18,39 +23,30 @@ class MainTableData extends ModuleData {
     required this.fields,
     this.showBorder = true,
     this.showInnerBorder = false,
-    super.moduleType = 'main_table',
     this.fieldsPerRow,
-  }) : super(
-         data: {
-           'fields': fields,
-           'showBorder': showBorder,
-           'showInnerBorder': showInnerBorder,
-           'fieldsPerRow': fieldsPerRow,
-         },
-       );
+    String? moduleId,
+    ModuleType moduleType = ModuleType.mainTable,
+  }) : super(moduleType, moduleId ?? moduleType.value, {
+         'fields': fields,
+         'showBorder': showBorder,
+         'showInnerBorder': showInnerBorder,
+         if (fieldsPerRow != null) 'fieldsPerRow': fieldsPerRow,
+       });
 
-  /// 从Map创建
-  factory MainTableData.fromMap(Map<String, dynamic> map) {
-    final fieldsData = map['fields'] as List<dynamic>? ?? [];
-    final fields = fieldsData.whereType<TableField>().toList();
-
+  /// 创建主表数据
+  factory MainTableData.forMainTable({
+    required List<TableField> fields,
+    bool showBorder = true,
+    bool showInnerBorder = false,
+    String? moduleId,
+  }) {
     return MainTableData(
       fields: fields,
-      showBorder: map['showBorder'] as bool? ?? true,
-      showInnerBorder: map['showInnerBorder'] as bool? ?? false,
-      moduleType: map['moduleType'] as String? ?? 'main_table',
-      fieldsPerRow: map['fieldsPerRow'] as int?,
+      showBorder: showBorder,
+      showInnerBorder: showInnerBorder,
+      moduleId: moduleId,
+      moduleType: ModuleType.mainTable,
     );
-  }
-
-  /// 转换为Map
-  Map<String, dynamic> toMap() {
-    return {
-      'fields': fields,
-      'showBorder': showBorder,
-      'showInnerBorder': showInnerBorder,
-      'fieldsPerRow': fieldsPerRow,
-    };
   }
 
   /// 创建页脚数据
@@ -59,110 +55,62 @@ class MainTableData extends ModuleData {
     bool showBorder = true,
     bool showInnerBorder = false,
     int fieldsPerRow = 3,
+    String? moduleId,
   }) {
     return MainTableData(
       fields: fields,
       showBorder: showBorder,
       showInnerBorder: showInnerBorder,
-      moduleType: 'footer',
       fieldsPerRow: fieldsPerRow,
+      moduleId: moduleId,
+      moduleType: ModuleType.footer,
     );
   }
 
-  /// 创建主表数据
-  factory MainTableData.forMainTable({
-    required List<TableField> fields,
-    bool showBorder = true,
-    bool showInnerBorder = false,
+  /// 从Map创建
+  factory MainTableData.fromMap(
+    Map<String, dynamic> map, {
+    String? moduleId,
+    ModuleType moduleType = ModuleType.mainTable,
   }) {
+    final fieldsData = map['fields'] as List<dynamic>? ?? [];
+    final fields = fieldsData
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (fieldMap) => TableField(
+            label: fieldMap['label'] as String? ?? '',
+            value: fieldMap['value'] as String? ?? '',
+            widthPercent: fieldMap['widthPercent'] as double?,
+            sort: fieldMap['sort'] as int? ?? 0,
+          ),
+        )
+        .toList();
+
     return MainTableData(
       fields: fields,
-      showBorder: showBorder,
-      showInnerBorder: showInnerBorder,
-      moduleType: 'main_table',
+      showBorder: map['showBorder'] as bool? ?? true,
+      showInnerBorder: map['showInnerBorder'] as bool? ?? false,
+      fieldsPerRow: map['fieldsPerRow'] as int?,
+      moduleId: moduleId,
+      moduleType: moduleType,
     );
   }
 
-  /// 检查是否为页脚模块
-  bool get isFooter => moduleType == 'footer';
+  /// 从 ModuleDescriptor 创建
+  factory MainTableData.fromDescriptor(ModuleDescriptor descriptor) {
+    if (descriptor.type != ModuleType.mainTable &&
+        descriptor.type != ModuleType.footer) {
+      throw ArgumentError('ModuleDescriptor type must be mainTable or footer');
+    }
 
-  /// 检查是否为主表模块
-  bool get isMainTable => moduleType == 'main_table';
-}
+    if (descriptor.data is Map<String, dynamic>) {
+      return MainTableData.fromMap(
+        descriptor.data as Map<String, dynamic>,
+        moduleId: descriptor.moduleId,
+        moduleType: descriptor.type,
+      );
+    }
 
-/// 主表字段构建器
-class MainTableFieldBuilder {
-  final List<TableField> _fields = [];
-
-  /// 添加字段
-  MainTableFieldBuilder addField(
-    String label,
-    String value, {
-    double? widthPercent,
-    int sort = 0,
-  }) {
-    _fields.add(
-      TableField(
-        label: label,
-        value: value,
-        widthPercent: widthPercent,
-        sort: sort,
-      ),
-    );
-    return this;
+    throw ArgumentError('Invalid data format for MainTableData');
   }
-
-  /// 添加指定宽度字段
-  MainTableFieldBuilder addWidthField(
-    String label,
-    String value,
-    double widthPercent, {
-    int sort = 0,
-  }) {
-    return addField(label, value, widthPercent: widthPercent, sort: sort);
-  }
-
-  /// 添加全宽字段
-  MainTableFieldBuilder addFullWidthField(
-    String label,
-    String value, {
-    int sort = 0,
-  }) {
-    return addField(label, value, widthPercent: 1.0, sort: sort);
-  }
-
-  /// 构建主表数据
-  MainTableData build({bool showBorder = true, bool showInnerBorder = false}) {
-    return MainTableData.forMainTable(
-      fields: List.from(_fields),
-      showBorder: showBorder,
-      showInnerBorder: showInnerBorder,
-    );
-  }
-
-  /// 构建页脚数据
-  MainTableData buildFooter({
-    bool showBorder = true,
-    bool showInnerBorder = false,
-    int fieldsPerRow = 3,
-  }) {
-    return MainTableData.forFooter(
-      fields: List.from(_fields),
-      showBorder: showBorder,
-      showInnerBorder: showInnerBorder,
-      fieldsPerRow: fieldsPerRow,
-    );
-  }
-
-  /// 清空字段
-  MainTableFieldBuilder clear() {
-    _fields.clear();
-    return this;
-  }
-
-  /// 获取字段数量
-  int get fieldCount => _fields.length;
-
-  /// 获取字段列表
-  List<TableField> get fields => List.unmodifiable(_fields);
 }

@@ -22,13 +22,16 @@ class CustomTableLayout {
       return pw.Container();
     }
 
-    // 按 sort 值降序排列，相同 sort 值保持原始顺序（稳定排序）
+    // 按 sort 值升序排列，null值排在最后，相同 sort 值保持原始顺序（稳定排序）
     final sortedFields = List<TableField>.from(fields);
     sortedFields.sort((a, b) {
-      if (a.sort != b.sort) {
-        return b.sort.compareTo(a.sort); // 降序：sort 值大的在前
-      }
-      return 0; // 相同 sort 值保持原顺序
+      // null值排在最后
+      if (a.sort == null && b.sort == null) return 0;
+      if (a.sort == null) return 1; // a排在后面
+      if (b.sort == null) return -1; // b排在后面
+
+      // 都不为null时，按升序排列（数值越小越靠前）
+      return a.sort!.compareTo(b.sort!);
     });
 
     return pw.Container(
@@ -74,29 +77,41 @@ class CustomTableLayout {
     final List<List<TableField>> rows = [];
     List<TableField> currentRow = [];
     double currentRowSpan = 0.0;
+    int currentFieldCount = 0;
+
+    // 获取每行最大字段数（如果配置中有）
+    final int maxFieldsPerRow = config is MainTableConfig
+        ? (config as MainTableConfig).fieldsPerRow
+        : 3; // 默认每行3个字段
 
     for (final field in fields) {
       // 获取字段的有效宽度百分比
       final fieldWidth = field.getEffectiveWidthPercent();
 
-      // 检查当前行是否还能容纳这个字段（基于百分比）
-      if (currentRowSpan + fieldWidth > 1.0) {
+      // 检查当前行是否还能容纳这个字段（基于百分比和字段数量）
+      final bool rowFullByWidth = currentRowSpan + fieldWidth > 1.0;
+      final bool rowFullByCount = currentFieldCount >= maxFieldsPerRow;
+
+      if (rowFullByWidth || rowFullByCount) {
         // 当前行已满，开始新行
         if (currentRow.isNotEmpty) {
           rows.add(currentRow);
           currentRow = [];
           currentRowSpan = 0.0;
+          currentFieldCount = 0;
         }
       }
 
       currentRow.add(field);
       currentRowSpan += fieldWidth;
+      currentFieldCount++;
 
       // 如果当前行正好填满，开始新行
-      if (currentRowSpan >= 1.0) {
+      if (currentRowSpan >= 1.0 || currentFieldCount >= maxFieldsPerRow) {
         rows.add(currentRow);
         currentRow = [];
         currentRowSpan = 0.0;
+        currentFieldCount = 0;
       }
     }
 
@@ -150,78 +165,100 @@ class CustomTableLayout {
     bool showBorder,
     double rowHeight, // 使用传入的行高度
   ) {
-    // 使用传入的行高度，不再重复计算
-
     final List<pw.Widget> widgets = [];
+
+    // 计算当前行所有字段的总宽度
+    double totalRowWidth = 0.0;
+    for (final field in fields) {
+      totalRowWidth += field.getEffectiveWidthPercent();
+    }
 
     for (int i = 0; i < fields.length; i++) {
       final field = fields[i];
-      final isLastField = i == fields.length - 1;
-      // 1/6基准宽度方案：标题固定1份，内容根据colspan计算
-      final labelFlex = 1; // 标题始终占1份（1/6屏幕宽度）
 
-      // 计算内容的flex值（基于widthPercent）
+      // 获取字段的有效宽度百分比
       final fieldWidth = field.getEffectiveWidthPercent();
-      // 将百分比转换为flex值（1-5的范围）
-      final contentFlex = (fieldWidth * 5).round().clamp(1, 5);
 
-      // 额外安全检查：确保总flex在合理范围内
-      final totalFlex = labelFlex + contentFlex;
-      late final int safeLabelFlex;
-      late final int safeContentFlex;
+      // 将 widthPercent 转换为 flex 值（基于6等份网格系统）
+      final fieldFlex = (fieldWidth * 6).round().clamp(2, 6); // 最小2份，确保有内容空间
 
-      if (totalFlex > 6) {
-        // 如果超出6份，说明计算有误，回退到安全值
-        safeLabelFlex = 1;
-        safeContentFlex = 2; // 回退到1:2比例
-      } else {
-        safeLabelFlex = labelFlex;
-        safeContentFlex = contentFlex;
+      // 在字段内部，标题固定占1份，内容占剩余份数
+      // 标题始终占据 1/6 宽度（固定不变）
+      final labelFlex = 1;
+      // 内容占据：字段总份数 - 标题份数(1)，最小为1
+      final contentFlex = (fieldFlex - 1).clamp(1, 5);
+
+      // 将整个字段作为一个单元，按照 widthPercent 占据行内空间
+      widgets.add(
+        pw.Expanded(
+          flex: fieldFlex,
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // 标题部分（固定占1份）
+              pw.Expanded(
+                flex: labelFlex,
+                child: pw.Container(
+                  height: rowHeight,
+                  padding: config.cellPadding,
+                  decoration: (showBorder && config.showInnerBorder)
+                      ? pw.BoxDecoration(
+                          border: pw.Border(
+                            right: pw.BorderSide(
+                              color:
+                                  config.borderColor ??
+                                  context.theme.borderColor,
+                              width:
+                                  config.borderWidth ??
+                                  context.theme.borderWidth,
+                            ),
+                          ),
+                        )
+                      : null,
+                  child: _buildLabelCell(field, context),
+                ),
+              ),
+              // 内容部分（占剩余份数）
+              pw.Expanded(
+                flex: contentFlex,
+                child: pw.Container(
+                  height: rowHeight,
+                  padding: config.cellPadding,
+                  decoration: (showBorder && config.showInnerBorder)
+                      ? pw.BoxDecoration(
+                          border: pw.Border(
+                            right: pw.BorderSide(
+                              color:
+                                  config.borderColor ??
+                                  context.theme.borderColor,
+                              width:
+                                  config.borderWidth ??
+                                  context.theme.borderWidth,
+                            ),
+                          ),
+                        )
+                      : null,
+                  child: _buildContentCell(field, context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 如果当前行的总宽度小于1.0，添加空白填充
+    if (totalRowWidth < 1.0) {
+      final remainingWidth = 1.0 - totalRowWidth;
+      final remainingFlex = (remainingWidth * 6).round();
+      if (remainingFlex > 0) {
+        widgets.add(
+          pw.Expanded(
+            flex: remainingFlex,
+            child: pw.Container(), // 空白填充
+          ),
+        );
       }
-
-      // 标题部分
-      widgets.add(
-        pw.Expanded(
-          flex: safeLabelFlex,
-          child: pw.Container(
-            height: rowHeight, // 动态计算的行高确保一致
-            padding: config.cellPadding,
-            decoration: (showBorder && config.showInnerBorder)
-                ? pw.BoxDecoration(
-                    border: pw.Border(
-                      right: pw.BorderSide(
-                        color: config.borderColor ?? context.theme.borderColor,
-                        width: config.borderWidth ?? context.theme.borderWidth,
-                      ),
-                    ),
-                  )
-                : null,
-            child: _buildLabelCell(field, context),
-          ),
-        ),
-      );
-
-      // 内容部分
-      widgets.add(
-        pw.Expanded(
-          flex: safeContentFlex,
-          child: pw.Container(
-            height: rowHeight, // 动态计算的行高确保一致
-            padding: config.cellPadding,
-            decoration: (showBorder && config.showInnerBorder && !isLastField)
-                ? pw.BoxDecoration(
-                    border: pw.Border(
-                      right: pw.BorderSide(
-                        color: config.borderColor ?? context.theme.borderColor,
-                        width: config.borderWidth ?? context.theme.borderWidth,
-                      ),
-                    ),
-                  )
-                : null,
-            child: _buildContentCell(field, context),
-          ),
-        ),
-      );
     }
 
     return widgets;
@@ -241,12 +278,16 @@ class CustomTableLayout {
 
     for (int fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
       final field = fields[fieldIndex];
-      // 计算标题可用宽度（1/6屏幕宽度）
+
+      // 获取字段的有效宽度百分比
+      final fieldWidth = field.getEffectiveWidthPercent();
+
+      // 标题固定占据 1/6 页面宽度
       final labelWidth = pageWidth / 6.0;
 
-      // 计算内容可用宽度（根据widthPercent动态计算）
-      final fieldWidth = field.getEffectiveWidthPercent();
-      final contentWidth = pageWidth * fieldWidth;
+      // 内容宽度 = 字段总宽度 - 标题宽度
+      final fieldTotalWidth = pageWidth * fieldWidth;
+      final contentWidth = fieldTotalWidth - labelWidth;
 
       // 估算标题高度（使用实际可用宽度）
       final labelHeight = _estimateTextHeight(

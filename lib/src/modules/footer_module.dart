@@ -8,23 +8,31 @@ import 'package:pdf_export_print/src/models/models.dart';
 /// 页脚模块，用于显示页面底部信息
 class FooterModule extends PDFModule {
   final FooterConfig _config;
+  final ModuleDescriptor _descriptor;
 
-  FooterModule({FooterConfig? config})
-    : _config = config ?? FooterConfig.defaultConfig();
+  FooterModule({FooterConfig? config, required ModuleDescriptor descriptor})
+    : this._internal(config ?? FooterConfig.defaultConfig(), descriptor);
 
-  @override
-  String get moduleId => 'footer';
-
-  @override
-  int get priority => 90; // 最低优先级，最后渲染
+  FooterModule._internal(this._config, this._descriptor) : super(_config);
 
   @override
-  ModuleConfig get config => _config.moduleConfig;
+  ModuleDescriptor get descriptor => _descriptor;
 
   @override
-  Future<List<pw.Widget>> render(ModuleData data, PDFContext context) async {
-    // 直接使用MainTableData，适配器保证输入类型正确
-    final footerData = data as MainTableData;
+  Future<List<pw.Widget>> render(
+    ModuleDescriptor descriptor,
+    PDFContext context,
+  ) async {
+    // 直接使用 ModuleDescriptor 中的数据，或者如果传入的就是 MainTableData 则直接使用
+    final MainTableData footerData;
+
+    if (descriptor is MainTableData) {
+      // 如果传入的就是 MainTableData，直接使用
+      footerData = descriptor;
+    } else {
+      // 从 ModuleDescriptor.data 创建 MainTableData（用于页脚）
+      footerData = MainTableData.fromDescriptor(descriptor);
+    }
 
     if (footerData.fields.isEmpty) {
       return [];
@@ -50,10 +58,18 @@ class FooterModule extends PDFModule {
   }
 
   @override
-  bool canRender(ModuleData data) {
-    // 直接使用MainTableData，适配器保证输入类型正确
-    final footerData = data as MainTableData;
-    return footerData.fields.isNotEmpty;
+  bool canRender(ModuleDescriptor descriptor) {
+    try {
+      final MainTableData footerData;
+      if (descriptor is MainTableData) {
+        footerData = descriptor;
+      } else {
+        footerData = MainTableData.fromDescriptor(descriptor);
+      }
+      return footerData.fields.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// 构建页脚表格

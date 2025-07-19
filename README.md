@@ -18,7 +18,7 @@
 
 ```yaml
 dependencies:
-  pdf_export_print: ^0.0.1
+  pdf_export_print: ^0.1.0
 ```
 
 然后运行：
@@ -46,16 +46,15 @@ final fieldLabels = FieldLabelConfig.custom({
 final config = DataAdapterConfig(
   fieldLabelConfig: fieldLabels,
   moduleConfigs: DataAdapterConfig.defaultConfig().moduleConfigs,
-  dataKeyMappings: DataAdapterConfig.defaultConfig().dataKeyMappings,
 );
 
 // 3. 创建类型安全适配器
 final adapter = TypeSafeDataAdapter(config: config);
 
-// 4. 准备数据（使用枚举确保类型安全）
+// 4. 准备数据（使用字符串键名）
 final data = {
-  DataKeys.titles.value: ['员工信息表'],
-  DataKeys.mainData.value: {
+  'titles': ['员工信息表'],
+  'mainData': {
     'name': '张三',
     'department': '技术部',
     'position': '高级工程师',
@@ -68,7 +67,7 @@ final pdfBuilder = PDFPrintBuilder()
     .withConfig(PDFConfig.defaultConfig())
     .withDataAdapter(adapter);
 
-final pdfDocument = await pdfBuilder.build(data);
+final pdfDocument = await pdfBuilder.build();
 final pdfBytes = await pdfDocument.save();
 ```
 
@@ -89,8 +88,8 @@ final fieldLabels = FieldLabelConfig.custom({
 
 // 2. 准备数据
 final employeeData = {
-  DataKeys.titles.value: ['员工信息表'],
-  DataKeys.mainData.value: {
+  'titles': ['员工信息表'],
+  'mainData': {
     'name': '张三',
     'department': '技术部',
     'position': '高级工程师',
@@ -105,7 +104,6 @@ final adapter = TypeSafeDataAdapter(
   config: DataAdapterConfig(
     fieldLabelConfig: fieldLabels,
     moduleConfigs: DataAdapterConfig.defaultConfig().moduleConfigs,
-    dataKeyMappings: DataAdapterConfig.defaultConfig().dataKeyMappings,
   ),
 );
 
@@ -113,7 +111,7 @@ final pdfBuilder = PDFPrintBuilder()
     .withConfig(PDFConfig.defaultConfig())
     .withDataAdapter(adapter);
 
-final pdfDocument = await pdfBuilder.build(employeeData);
+final pdfDocument = await pdfBuilder.build();
 ```
 
 ### 项目报告表
@@ -121,14 +119,14 @@ final pdfDocument = await pdfBuilder.build(employeeData);
 ```dart
 // 包含子表数据的项目报告
 final projectData = {
-  DataKeys.titles.value: ['项目进度报告'],
-  DataKeys.mainData.value: {
+  'titles': ['项目进度报告'],
+  'mainData': {
     'projectName': 'PDF导出系统',
     'manager': '李四',
     'startDate': '2024-01-01',
     'status': '进行中',
   },
-  DataKeys.details.value: [
+  'details': [
     {
       'taskName': '需求分析',
       'assignee': '张三',
@@ -154,22 +152,25 @@ final projectData = {
 final config = DataAdapterConfig(
   fieldLabelConfig: fieldLabels,
   moduleConfigs: {
-    ModuleTypes.title: AdapterModuleConfig(
+    ModuleType.title: AdapterModuleConfig(
+      moduleType: ModuleType.title,
       enabled: true,
       priority: 1,
     ),
-    ModuleTypes.mainTable: AdapterModuleConfig(
+    ModuleType.mainTable: AdapterModuleConfig(
+      moduleType: ModuleType.mainTable,
       enabled: true,
       priority: 2,
     ),
-    ModuleTypes.subTable: AdapterModuleConfig(
+    ModuleType.subTable: AdapterModuleConfig(
+      moduleType: ModuleType.subTable,
       enabled: false,  // 隐藏子表
     ),
-    ModuleTypes.approval: AdapterModuleConfig(
+    ModuleType.approval: AdapterModuleConfig(
+      moduleType: ModuleType.approval,
       enabled: false,  // 隐藏审批记录
     ),
   },
-  dataKeyMappings: DataAdapterConfig.defaultConfig().dataKeyMappings,
 );
 ```
 
@@ -178,7 +179,7 @@ final config = DataAdapterConfig(
 ```dart
 final pdfConfig = PDFConfig.builder()
     .withOrientation(pw.PageOrientation.portrait)  // 纵向
-    .withMargins(const pw.EdgeInsets.all(20))      // 页边距
+    .margins(const pw.EdgeInsets.all(20))          // 页边距
     .build();
 
 final pdfBuilder = PDFPrintBuilder()
@@ -190,9 +191,9 @@ final pdfBuilder = PDFPrintBuilder()
 
 ```dart
 final dataWithLogo = {
-  DataKeys.logoUrl.value: 'https://example.com/logo.png',
-  DataKeys.titles.value: ['公司员工信息表'],
-  DataKeys.mainData.value: {
+  'logoUrl': 'https://example.com/logo.png',
+  'titles': ['公司员工信息表'],
+  'mainData': {
     'name': '张三',
     'department': '技术部',
   },
@@ -289,7 +290,6 @@ final typeSafeAdapter = TypeSafeDataAdapter(
   config: DataAdapterConfig(
     fieldLabelConfig: fieldLabels,
     moduleConfigs: DataAdapterConfig.defaultConfig().moduleConfigs,
-    dataKeyMappings: DataAdapterConfig.defaultConfig().dataKeyMappings,
   ),
 );
 ```
@@ -305,9 +305,7 @@ final typeSafeAdapter = TypeSafeDataAdapter(
 
 ### 枚举常量
 
-- **`DataKeys`**: 原始数据键名枚举
-- **`ModuleTypes`**: PDF模块类型枚举
-- **`ModuleDataKeys`**: 模块内部数据键枚举
+- **`ModuleType`**: PDF模块类型枚举
 
 ### 配置类
 

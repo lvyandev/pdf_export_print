@@ -1,27 +1,9 @@
 {
   "file_relations": {
-    "lib/src/core/data_adapter.dart": [
-      {
-        "target": "lib/src/adapters/type_safe_data_adapter.dart",
-        "description": "GenericDataAdapter 被废弃，推荐使用 TypeSafeDataAdapter 替代以解决类型转换异常问题"
-      }
-    ],
     "lib/src/config/adapter_config.dart": [
       {
         "target": "lib/src/adapters/type_safe_data_adapter.dart",
         "description": "配置类被类型安全适配器使用，提供字段标签映射和模块配置管理"
-      }
-    ],
-    "lib/src/adapters/type_safe_data_adapter.dart": [
-      {
-        "target": "example/lib/type_safe_adapter_example.dart",
-        "description": "类型安全适配器的使用示例，展示如何配置和使用新的适配器替代硬编码方式"
-      }
-    ],
-    "lib/src/models/main_table_data.dart": [
-      {
-        "target": "lib/src/data/table_field.dart",
-        "description": "MainTableFieldBuilder 创建带有 sort 字段的 TableField 实例"
       }
     ],
     "docs/migration_guide.md": [
@@ -34,6 +16,24 @@
         "description": "迁移指南引用配置详解文档，帮助用户理解配置参数的具体作用"
       }
     ],
+    "lib/src/modules/sub_table_module.dart": [
+      {
+        "target": "lib/src/data/table_header.dart",
+        "description": "SubTableModule 使用 TableHeader 进行表头排序"
+      },
+      {
+        "target": "lib/src/components/custom_table_layout.dart",
+        "description": "子表模块使用自定义表格布局组件实现复杂的表格渲染和布局功能"
+      },
+      {
+        "target": "lib/src/components/cell_renderer.dart",
+        "description": "子表模块使用单元格渲染器处理图片展示和内容渲染，实现图片自适应缩放功能"
+      },
+      {
+        "target": "lib/src/configs/sub_table_config.dart",
+        "description": "子表模块依赖子表配置类获取渲染参数，包括字段映射、样式设置、图片显示配置等"
+      }
+    ],
     "example/lib/main.dart": [
       {
         "target": "example/lib/type_safe_adapter_example.dart",
@@ -42,6 +42,10 @@
       {
         "target": "lib/src/adapters/type_safe_data_adapter.dart",
         "description": "SimpleDataAdapter 重构为基于 TypeSafeDataAdapter 的实现，解决类型转换异常"
+      },
+      {
+        "target": "lib/pdf_export_print.dart",
+        "description": "示例应用导入主库文件，展示PDF导出功能的完整使用方法，包括TypeSafeDataAdapter的使用和图片展示功能"
       }
     ],
     "lib/src/constants/adapter_constants.dart": [
@@ -50,10 +54,62 @@
         "description": "枚举常量被配置类使用，定义数据键、模块类型和字段键的类型安全常量"
       }
     ],
+    "lib/src/models/main_table_data.dart": [
+      {
+        "target": "lib/src/data/table_field.dart",
+        "description": "MainTableFieldBuilder 创建带有 sort 字段的 TableField 实例"
+      }
+    ],
+    "lib/src/core/data_adapter.dart": [
+      {
+        "target": "lib/src/adapters/type_safe_data_adapter.dart",
+        "description": "GenericDataAdapter 被废弃，推荐使用 TypeSafeDataAdapter 替代以解决类型转换异常问题"
+      },
+      {
+        "target": "lib/src/core/module_descriptor.dart",
+        "description": "类型安全数据适配器使用模块描述符进行类型安全的模块配置和数据映射"
+      }
+    ],
+    "lib/src/core/pdf_builder.dart": [
+      {
+        "target": "lib/src/core/pdf_config.dart",
+        "description": "PDF构建器依赖PDF配置类获取全局配置参数，包括页面设置、主题选择、模块启用状态等"
+      },
+      {
+        "target": "lib/src/core/pdf_context.dart",
+        "description": "PDF构建器使用PDF上下文管理生成过程中的全局状态和共享资源"
+      },
+      {
+        "target": "lib/src/core/pdf_module.dart",
+        "description": "PDF构建器协调各个PDF模块的渲染，通过模块基类接口实现统一的模块管理"
+      }
+    ],
+    "lib/src/modules/main_table_module.dart": [
+      {
+        "target": "lib/src/components/custom_table_layout.dart",
+        "description": "主表模块使用自定义表格布局组件实现标准化的表格渲染功能"
+      },
+      {
+        "target": "lib/src/configs/main_table_config.dart",
+        "description": "MainTableModule现在正确使用MainTableConfig.fieldsPerRow参数设置CustomTableConfig的maxColumnsPerRow，修复了参数传递问题"
+      }
+    ],
     "lib/src/components/custom_table_layout.dart": [
       {
         "target": "lib/src/data/table_field.dart",
         "description": "CustomTableLayout 使用 TableField.sort 字段进行排序"
+      }
+    ],
+    "lib/src/configs/sub_table_config.dart": [
+      {
+        "target": "lib/src/configs/common_table_config.dart",
+        "description": "SubTableConfig通过CommonTableConfig传递headerHeight配置到CommonTableWidget，两者都支持可空headerHeight实现自适应高度"
+      }
+    ],
+    "lib/src/adapters/type_safe_data_adapter.dart": [
+      {
+        "target": "example/lib/type_safe_adapter_example.dart",
+        "description": "类型安全适配器的使用示例，展示如何配置和使用新的适配器替代硬编码方式"
       }
     ],
     "README.md": [
@@ -70,6 +126,12 @@
         "description": "README中推荐查看类型安全适配器示例，展示最佳实践"
       }
     ],
+    "lib/src/configs/common_table_config.dart": [
+      {
+        "target": "lib/src/components/common_table_widget.dart",
+        "description": "CommonTableConfig的headerHeight配置在CommonTableWidget._buildHeaderCell方法中使用，支持null值实现自适应高度"
+      }
+    ],
     "lib/pdf_export_print.dart": [
       {
         "target": "lib/src/constants/adapter_constants.dart",
@@ -82,12 +144,6 @@
       {
         "target": "lib/src/adapters/type_safe_data_adapter.dart",
         "description": "主导出文件导出类型安全适配器，作为新架构的核心组件提供给用户"
-      }
-    ],
-    "lib/src/modules/sub_table_module.dart": [
-      {
-        "target": "lib/src/data/table_header.dart",
-        "description": "SubTableModule 使用 TableHeader 进行表头排序"
       }
     ]
   }

@@ -1,9 +1,9 @@
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
-import 'package:pdf_export_print/src/configs/module_config.dart';
+import 'package:pdf_export_print/src/configs/base_module_config.dart';
 
 /// 主表模块配置
-class MainTableConfig {
+class MainTableConfig extends BaseModuleConfig {
   /// 是否显示边框
   final bool showBorder;
 
@@ -40,13 +40,9 @@ class MainTableConfig {
   /// 每行字段数
   final int fieldsPerRow;
 
-  /// 模块配置
-  final ModuleConfig moduleConfig;
-
-  MainTableConfig({
+  const MainTableConfig({
     this.showBorder = true,
     this.showInnerBorder = true,
-
     this.borderColor,
     this.borderWidth,
     this.cellPadding = const pw.EdgeInsets.all(4),
@@ -57,8 +53,10 @@ class MainTableConfig {
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
     this.fieldsPerRow = 3,
-    ModuleConfig? moduleConfig,
-  }) : moduleConfig = moduleConfig ?? ModuleConfig(priority: 30);
+    super.enabled = true,
+    super.priority = 30,
+    super.required = false,
+  });
 
   /// 创建默认配置
   static MainTableConfig defaultConfig() => MainTableConfig();
@@ -73,4 +71,61 @@ class MainTableConfig {
     topSpacing: 0.0,
     bottomSpacing: 10.0,
   );
+
+  /// 创建副本
+  ///
+  /// ### 参数
+  /// - [showBorder] 是否显示边框
+  /// - [showInnerBorder] 是否显示内边框
+  /// - [borderColor] 边框颜色
+  /// - [borderWidth] 边框宽度
+  /// - [cellPadding] 单元格内边距
+  /// - [labelFontSize] 标题字体大小
+  /// - [contentFontSize] 内容字体大小
+  /// - [labelColor] 标题颜色
+  /// - [contentColor] 内容颜色
+  /// - [topSpacing] 顶部间距
+  /// - [bottomSpacing] 底部间距
+  /// - [fieldsPerRow] 每行字段数
+  /// - [enabled] 是否启用该模块
+  /// - [priority] 模块优先级
+  /// - [required] 是否必需
+  /// ### 返回值
+  /// 返回新的 MainTableConfig 实例
+  @override
+  MainTableConfig copyWith({
+    bool? showBorder,
+    bool? showInnerBorder,
+    PdfColor? borderColor,
+    double? borderWidth,
+    pw.EdgeInsets? cellPadding,
+    double? labelFontSize,
+    double? contentFontSize,
+    PdfColor? labelColor,
+    PdfColor? contentColor,
+    double? topSpacing,
+    double? bottomSpacing,
+    int? fieldsPerRow,
+    bool? enabled,
+    int? priority,
+    bool? required,
+  }) {
+    return MainTableConfig(
+      showBorder: showBorder ?? this.showBorder,
+      showInnerBorder: showInnerBorder ?? this.showInnerBorder,
+      borderColor: borderColor ?? this.borderColor,
+      borderWidth: borderWidth ?? this.borderWidth,
+      cellPadding: cellPadding ?? this.cellPadding,
+      labelFontSize: labelFontSize ?? this.labelFontSize,
+      contentFontSize: contentFontSize ?? this.contentFontSize,
+      labelColor: labelColor ?? this.labelColor,
+      contentColor: contentColor ?? this.contentColor,
+      topSpacing: topSpacing ?? this.topSpacing,
+      bottomSpacing: bottomSpacing ?? this.bottomSpacing,
+      fieldsPerRow: fieldsPerRow ?? this.fieldsPerRow,
+      enabled: enabled ?? this.enabled,
+      priority: priority ?? this.priority,
+      required: required ?? this.required,
+    );
+  }
 }

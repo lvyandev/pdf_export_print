@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf_export_print/src/themes/themes.dart';
@@ -10,7 +9,7 @@ abstract class PDFConfig {
   PdfPageFormat get pageSize;
 
   /// 页面边距
-  EdgeInsets get margins;
+  pw.EdgeInsets get margins;
 
   /// 样式主题
   StyleTheme get theme;
@@ -31,7 +30,7 @@ abstract class PDFConfig {
 /// PDF配置构建器
 class PDFConfigBuilder {
   PdfPageFormat _pageSize = PdfPageFormat.a4;
-  EdgeInsets _margins = const EdgeInsets.all(20);
+  pw.EdgeInsets _margins = const pw.EdgeInsets.all(20);
   StyleTheme _theme = DefaultTheme();
   pw.PageOrientation? _orientation = pw.PageOrientation.landscape;
   WatermarkConfig _watermarkConfig = WatermarkConfig.defaultConfig();
@@ -43,7 +42,7 @@ class PDFConfigBuilder {
   }
 
   /// 设置页面边距
-  PDFConfigBuilder margins(EdgeInsets margins) {
+  PDFConfigBuilder margins(pw.EdgeInsets margins) {
     _margins = margins;
     return this;
   }
@@ -84,7 +83,7 @@ class _DefaultPDFConfig extends PDFConfig {
   PdfPageFormat get pageSize => PdfPageFormat.a4;
 
   @override
-  EdgeInsets get margins => const EdgeInsets.all(16);
+  pw.EdgeInsets get margins => const pw.EdgeInsets.all(16);
 
   @override
   StyleTheme get theme => DefaultTheme();
@@ -99,14 +98,14 @@ class _DefaultPDFConfig extends PDFConfig {
 /// 自定义PDF配置实现
 class _CustomPDFConfig extends PDFConfig {
   final PdfPageFormat _pageSize;
-  final EdgeInsets _margins;
+  final pw.EdgeInsets _margins;
   final StyleTheme _theme;
   final pw.PageOrientation? _orientation;
   final WatermarkConfig _watermarkConfig;
 
   _CustomPDFConfig({
     required PdfPageFormat pageSize,
-    required EdgeInsets margins,
+    required pw.EdgeInsets margins,
     required StyleTheme theme,
     pw.PageOrientation? orientation,
     required WatermarkConfig watermarkConfig,
@@ -120,7 +119,7 @@ class _CustomPDFConfig extends PDFConfig {
   PdfPageFormat get pageSize => _pageSize;
 
   @override
-  EdgeInsets get margins => _margins;
+  pw.EdgeInsets get margins => _margins;
 
   @override
   StyleTheme get theme => _theme;

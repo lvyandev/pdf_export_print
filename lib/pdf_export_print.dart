@@ -17,17 +17,27 @@ library;
 /// ```dart
 /// import 'package:pdf_export_print/pdf_export_print.dart';
 ///
+/// // 创建带数据的模块描述符
+/// final moduleDescriptors = {
+///   ModuleDescriptor.logo.copyWith(data: 'https://example.com/logo.png'),
+///   ModuleDescriptor.title.copyWith(data: {'titles': ['文档标题']}),
+///   ModuleDescriptor.mainTable.copyWith(data: {'name': '张三', 'age': 30}),
+/// };
+///
+/// // 创建配置
+/// final config = DataAdapterConfig(moduleDescriptors: moduleDescriptors);
+/// final adapter = TypeSafeDataAdapter(config: config);
+///
 /// // 创建PDF构建器
 /// final pdfBuilder = PDFPrintBuilder()
 ///   .withConfig(PDFConfig.defaultConfig())
-///   .withDataAdapter(TypeSafeDataAdapter())
+///   .withDataAdapter(adapter)
 ///   .addModule(LogoModule())
 ///   .addModule(TitleModule())
-///   .addModule(MainTableModule())
-///   .addModule(SubTableModule());
+///   .addModule(MainTableModule());
 ///
-/// // 生成PDF
-/// final pdf = await pdfBuilder.build(businessData);
+/// // 生成PDF（数据来自 ModuleDescriptor）
+/// final pdf = await pdfBuilder.build();
 /// ```
 ///
 /// ## 高级定制

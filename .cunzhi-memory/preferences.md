@@ -1,3 +1,6 @@
 # 用户偏好设置
 
 - 用户选择统一使用 TypeSafeDataAdapter 来修复 modules 系统的类型转换异常问题，废弃有问题的 DataAdapter 实现
+- 用户强调配置转换方案必须确保每个模块的特色config配置都能完整实现，不能丢三落四导致样式丢失无法追溯
+- 用户选择使用更优雅的泛型配置基类方案：AdapterModuleConfig去掉customSettings，为所有module的config增加父类基类，AdapterModuleConfig添加泛型config字段，避免复杂的配置转换器
+- 用户要求合并两个示例文件，保留main.dart的控制界面功能和type_safe_adapter_example.dart的完整TypeSafe配置，特别要求保留图片展示功能，禁止生成文档、测试、编译或运行操作

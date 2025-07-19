@@ -1,146 +1,251 @@
-import 'package:pdf_export_print/src/data/data.dart';
+import 'package:pdf_export_print/src/constants/constants.dart';
+import 'package:pdf_export_print/src/core/core.dart';
+import 'package:pdf_export_print/src/data/table_field.dart';
 
-/// 子表数据模型
-class SubTableData extends ModuleData {
+/// 子表数据模型（同时支持子表和审批流）
+///
+/// 继承自 ModuleDescriptor，提供强类型的子表数据结构
+class SubTableData extends ModuleDescriptor {
+  /// 表格数据行列表（每行是 TableField 列表）
+  final List<List<TableField>> tableRows;
+
   /// 表头列表
   final List<String> headers;
-  
-  /// 表格行数据（每行是一个TableField列表）
-  final List<List<TableField>> rows;
-  
-  /// 表格标题
-  final String? title;
-  
+
+  /// 表格列配置
+  final Map<String, dynamic>? columnConfig;
+
   /// 是否显示边框
   final bool showBorder;
 
-  SubTableData({
-    required this.headers,
-    required this.rows,
-    this.title,
-    this.showBorder = true,
-  }) : super(
-        moduleType: 'sub_table',
-        data: {
-          'headers': headers,
-          'rows': rows,
-          if (title != null) 'title': title,
-          'showBorder': showBorder,
-        },
-      );
+  /// 是否显示内边框
+  final bool showInnerBorder;
 
-  /// 从Map创建
-  factory SubTableData.fromMap(Map<String, dynamic> map) {
-    final headersData = map['headers'] as List<dynamic>? ?? [];
-    final headers = headersData.map((h) => h.toString()).toList();
-    
-    final rowsData = map['rows'] as List<dynamic>? ?? [];
-    final rows = rowsData.map((row) {
-      if (row is List) {
-        return row.whereType<TableField>().toList();
+  /// 是否支持图片展示
+  final bool supportImages;
+
+  /// 标题
+  final String? title;
+
+  /// 检查是否为空
+  bool get isEmpty => tableRows.isEmpty;
+
+  /// 获取原始行数据（向后兼容）
+  List<Map<String, dynamic>> get rows {
+    return tableRows.map((row) {
+      final Map<String, dynamic> rowMap = {};
+      for (int i = 0; i < row.length && i < headers.length; i++) {
+        rowMap[headers[i]] = row[i].value;
       }
-      return <TableField>[];
+      return rowMap;
+    }).toList();
+  }
+
+  SubTableData({
+    required this.tableRows,
+    required this.headers,
+    this.columnConfig,
+    this.showBorder = true,
+    this.showInnerBorder = true,
+    this.supportImages = false,
+    this.title,
+    String? moduleId,
+    ModuleType moduleType = ModuleType.subTable,
+  }) : super(
+         moduleType,
+         moduleId ??
+             (moduleType == ModuleType.approval ? 'approval' : 'sub_table'),
+         {
+           'tableRows': tableRows,
+           'headers': headers,
+           if (columnConfig != null) 'columnConfig': columnConfig,
+           'showBorder': showBorder,
+           'showInnerBorder': showInnerBorder,
+           'supportImages': supportImages,
+           if (title != null) 'title': title,
+         },
+       );
+
+  /// 从原始行数据创建 SubTableData（私有方法）
+  factory SubTableData._fromRawRows(
+    List<Map<String, dynamic>> rawRows, {
+    Map<String, dynamic>? columnConfig,
+    bool showBorder = true,
+    bool showInnerBorder = true,
+    bool supportImages = false,
+    String? title,
+    String? moduleId,
+    ModuleType moduleType = ModuleType.subTable,
+  }) {
+    if (rawRows.isEmpty) {
+      return SubTableData(
+        tableRows: [],
+        headers: [],
+        columnConfig: columnConfig,
+        showBorder: showBorder,
+        showInnerBorder: showInnerBorder,
+        supportImages: supportImages,
+        title: title,
+        moduleId: moduleId,
+        moduleType: moduleType,
+      );
+    }
+
+    // 从第一行提取表头
+    final headers = rawRows.first.keys.toList();
+
+    // 将每行数据转换为 TableField 列表
+    final List<List<TableField>> tableRows = rawRows.map((rowMap) {
+      return headers.map((header) {
+        final rawValue = rowMap[header];
+
+        // 智能解析不同类型的数据
+        if (rawValue is Map<String, dynamic>) {
+          // 如果是复杂对象（如图片信息），创建带有完整信息的 TableField
+          final String displayValue =
+              rawValue['value']?.toString() ??
+              rawValue['url']?.toString() ??
+              rawValue['imageUrl']?.toString() ??
+              '';
+
+          // 检查是否是图片类型
+          if (rawValue.containsKey('imageUrl') || rawValue.containsKey('url')) {
+            return TableField(
+              label: header,
+              value: displayValue,
+              content: ImageContent(
+                imageUrl:
+                    rawValue['imageUrl']?.toString() ??
+                    rawValue['url']?.toString() ??
+                    '',
+                altText: rawValue['altText']?.toString(),
+                maxHeight: rawValue['maxHeight'] as double?,
+              ),
+              widthPercent: rawValue['widthPercent'] as double?,
+              sort: rawValue['sort'] as int? ?? 0,
+            );
+          } else {
+            // 复杂文本对象
+            return TableField(
+              label: header,
+              value: displayValue,
+              content: TextContent(displayValue),
+              widthPercent: rawValue['widthPercent'] as double?,
+              sort: rawValue['sort'] as int? ?? 0,
+            );
+          }
+        } else {
+          // 简单值，创建基本的 TableField
+          return TableField(
+            label: header,
+            value: rawValue?.toString() ?? '',
+            sort: 0,
+          );
+        }
+      }).toList();
     }).toList();
 
     return SubTableData(
+      tableRows: tableRows,
       headers: headers,
-      rows: rows,
-      title: map['title'] as String?,
-      showBorder: map['showBorder'] as bool? ?? true,
-    );
-  }
-
-  /// 转换为Map
-  Map<String, dynamic> toMap() {
-    return {
-      'headers': headers,
-      'rows': rows,
-      if (title != null) 'title': title,
-      'showBorder': showBorder,
-    };
-  }
-  
-  /// 获取指定行的数据
-  List<TableField>? getRow(int index) {
-    if (index >= 0 && index < rows.length) {
-      return rows[index];
-    }
-    return null;
-  }
-  
-  /// 获取行数
-  int get rowCount => rows.length;
-  
-  /// 获取列数
-  int get columnCount => headers.length;
-  
-  /// 检查是否为空表
-  bool get isEmpty => headers.isEmpty || rows.isEmpty;
-}
-
-/// 子表字段构建器
-class SubTableFieldBuilder {
-  final List<String> _headers = [];
-  final List<List<TableField>> _rows = [];
-
-  /// 设置表头
-  SubTableFieldBuilder setHeaders(List<String> headers) {
-    _headers.clear();
-    _headers.addAll(headers);
-    return this;
-  }
-  
-  /// 添加表头
-  SubTableFieldBuilder addHeader(String header) {
-    _headers.add(header);
-    return this;
-  }
-
-  /// 添加行数据
-  SubTableFieldBuilder addRow(List<TableField> row) {
-    _rows.add(List.from(row));
-    return this;
-  }
-  
-  /// 添加简单行数据（自动创建TableField）
-  SubTableFieldBuilder addSimpleRow(List<String> values, {List<double>? widthPercents}) {
-    final row = <TableField>[];
-    for (int i = 0; i < values.length; i++) {
-      final value = values[i];
-      final widthPercent = widthPercents != null && i < widthPercents.length 
-          ? widthPercents[i] 
-          : null;
-      
-      row.add(TableField(
-        label: i < _headers.length ? _headers[i] : 'Column $i',
-        value: value,
-        widthPercent: widthPercent,
-      ));
-    }
-    _rows.add(row);
-    return this;
-  }
-
-  /// 构建数据
-  SubTableData build({String? title, bool showBorder = true}) {
-    return SubTableData(
-      headers: List.from(_headers),
-      rows: _rows.map((row) => List<TableField>.from(row)).toList(),
-      title: title,
+      columnConfig: columnConfig,
       showBorder: showBorder,
+      showInnerBorder: showInnerBorder,
+      supportImages: supportImages,
+      title: title,
+      moduleId: moduleId,
+      moduleType: moduleType,
     );
   }
 
-  /// 清空数据
-  SubTableFieldBuilder clear() {
-    _headers.clear();
-    _rows.clear();
-    return this;
+  /// 创建子表数据
+  factory SubTableData.forSubTable({
+    required List<Map<String, dynamic>> rows,
+    Map<String, dynamic>? columnConfig,
+    bool showBorder = true,
+    bool showInnerBorder = true,
+    bool supportImages = false,
+    String? moduleId,
+  }) {
+    return SubTableData._fromRawRows(
+      rows,
+      columnConfig: columnConfig,
+      showBorder: showBorder,
+      showInnerBorder: showInnerBorder,
+      supportImages: supportImages,
+      moduleId: moduleId,
+      moduleType: ModuleType.subTable,
+    );
   }
 
-  /// 获取当前行数
-  int get rowCount => _rows.length;
-  
-  /// 获取当前列数
-  int get columnCount => _headers.length;
+  /// 创建审批流数据
+  factory SubTableData.forApproval({
+    required List<Map<String, dynamic>> rows,
+    Map<String, dynamic>? columnConfig,
+    bool showBorder = true,
+    bool showInnerBorder = true,
+    String? moduleId,
+  }) {
+    return SubTableData._fromRawRows(
+      rows,
+      columnConfig: columnConfig,
+      showBorder: showBorder,
+      showInnerBorder: showInnerBorder,
+      supportImages: false, // 审批流通常不需要图片
+      moduleId: moduleId,
+      moduleType: ModuleType.approval,
+    );
+  }
+
+  /// 从List创建
+  factory SubTableData.fromList(
+    List<dynamic> list, {
+    String? moduleId,
+    ModuleType moduleType = ModuleType.subTable,
+    bool supportImages = false,
+  }) {
+    final rows = list.whereType<Map<String, dynamic>>().toList();
+    return SubTableData._fromRawRows(
+      rows,
+      supportImages: supportImages,
+      moduleId: moduleId,
+      moduleType: moduleType,
+    );
+  }
+
+  /// 从 ModuleDescriptor 创建
+  factory SubTableData.fromDescriptor(ModuleDescriptor descriptor) {
+    if (descriptor.type != ModuleType.subTable &&
+        descriptor.type != ModuleType.approval) {
+      throw ArgumentError('ModuleDescriptor type must be subTable or approval');
+    }
+
+    if (descriptor.data is List<dynamic>) {
+      return SubTableData.fromList(
+        descriptor.data as List<dynamic>,
+        moduleId: descriptor.moduleId,
+        moduleType: descriptor.type,
+        supportImages: descriptor.type == ModuleType.subTable,
+      );
+    }
+
+    if (descriptor.data is Map<String, dynamic>) {
+      final map = descriptor.data as Map<String, dynamic>;
+      final rowsData = map['rows'] as List<dynamic>? ?? [];
+      final rows = rowsData.whereType<Map<String, dynamic>>().toList();
+
+      return SubTableData._fromRawRows(
+        rows,
+        columnConfig: map['columnConfig'] as Map<String, dynamic>?,
+        showBorder: map['showBorder'] as bool? ?? true,
+        showInnerBorder: map['showInnerBorder'] as bool? ?? true,
+        supportImages: map['supportImages'] as bool? ?? false,
+        title: map['title'] as String?,
+        moduleId: descriptor.moduleId,
+        moduleType: descriptor.type,
+      );
+    }
+
+    throw ArgumentError('Invalid data format for SubTableData');
+  }
 }
